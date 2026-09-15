@@ -1,3 +1,5 @@
+import { BANDS } from './score.js';
+
 /**
  * Daily (non-workout) metrics: what you ate, what you drank, and the colour
  * ramps that let the calendar be read through each of them.
@@ -61,7 +63,8 @@ export function hasCheckin(day) {
  * a day's bubble, or null when that day has nothing for this metric.
  */
 export const LENSES = [
-  { key: 'workouts', label: 'Workouts' },
+  { key: 'day',      label: 'Day' },
+  { key: 'workouts', label: 'Moved' },
   { key: 'food',     label: 'Food' },
   { key: 'drinks',   label: 'Drinks' },
   { key: 'sleep',    label: 'Sleep' },
@@ -69,6 +72,7 @@ export const LENSES = [
 
 export function lensLegend(key) {
   switch (key) {
+    case 'day': return BANDS.map((b) => ({ color: b.color, label: b.label }));
     case 'food':   return DIET.map((d) => ({ color: d.color, label: `${d.icon} ${d.label}` }));
     case 'drinks': return DRINK_COLORS.map((color, i) => ({ color, label: i >= 5 ? '5+' : String(i) }));
     case 'sleep':  return [

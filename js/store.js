@@ -3,6 +3,7 @@
 
 import { todayKey, monthKey, addDays, daysBetween, weekStartKey } from './util/date.js';
 import { findExercise, muscleShare, entryVolume, bestSet } from './exercises.js';
+import { scoreDay } from './score.js';
 
 const STORAGE_KEY = 'workouts.v1';
 const SCHEMA_VERSION = 1;
@@ -57,6 +58,7 @@ class Store extends EventTarget {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) this.state = this.migrate(JSON.parse(raw));
+      this._byDate = null;
     } catch (err) {
       console.error('Could not read saved data, starting fresh', err);
     }
@@ -89,6 +91,7 @@ class Store extends EventTarget {
   }
 
   changed(detail) {
+    this._byDate = null;
     this.save();
     this.emit('change', detail);
   }
@@ -104,10 +107,30 @@ class Store extends EventTarget {
 
   get workouts() { return Object.values(this.state.workouts); }
 
+  /** Workouts bucketed by date, rebuilt only when something changes. */
+  get byDate() {
+    if (!this._byDate) {
+      this._byDate = {};
+      for (const w of this.workouts) (this._byDate[w.date] ||= []).push(w);
+      for (const list of Object.values(this._byDate)) {
+        list.sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+      }
+    }
+    return this._byDate;
+  }
+
   workoutsOn(dayKey) {
-    return this.workouts
-      .filter((w) => w.date === dayKey)
-      .sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+    return this.byDate[dayKey] || [];
+  }
+
+  /** What the day scorer needs for one date. */
+  dayContext(dayKey) {
+    return { workouts: this.workoutsOn(dayKey), day: this.day(dayKey) };
+  }
+
+  /** The day's score, or null when nothing was logged. */
+  scoreFor(dayKey) {
+    return scoreDay(dayKey, (k) => this.dayContext(k));
   }
 
   // dayKey -> workout[] for a whole month, built once per render.

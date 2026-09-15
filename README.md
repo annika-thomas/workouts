@@ -8,12 +8,24 @@ data lives on your device.
 
 ## What it does
 
-**Calendar** — every day is a face. The colour tells you *what* you did (each
-activity has its own pastel), and the expression tells you *how it went*: a
-contented smile for an easy session, a grin for a good one, a flat mouth for
-something long or maximal, eyes shut for a rest day. Days you haven't logged
-sit as quiet empty circles. A second activity shows up as a small companion
-dot, and a dot beside the date means you logged sleep, weight or a note.
+**Calendar** — every day is a face, on a spectrum from a gold grin to a coral
+frown. The score behind it is a weighted blend of three things you control:
+whether you moved (40%), how you ate (35%), and how little you drank (25%).
+
+Two pieces of fairness sit on top, because a flat average would lie:
+
+- **A rest day isn't a failure if you earned it.** Train hard yesterday — or
+  wake up sore — and today's movement still counts. The credit fades: the day
+  after a hard session is fully earned, the one after that half, and a third
+  straight day off is back on you.
+- **Weekend drinks are judged more gently.** The same three drinks cost you
+  noticeably less on a Friday or Saturday than on a Tuesday.
+
+Only what you logged counts — the weights re-normalise over what's there, so a
+day isn't punished for the blanks. Days scored from just one of the three show
+faded, and days with nothing at all stay empty circles. Tap any day for the
+breakdown: which component scored what, and why (*earned rest*, *3, weekend*).
+
 Swipe left and right between months.
 
 **Two things to log.** The centre button asks which: a **workout**, or a
@@ -22,11 +34,10 @@ tap-first, so a daily weigh-in is two taps from opening the app, and the
 Calendar carries a "How was today?" card that becomes a summary once you've
 filled it in.
 
-**Four lenses on the month.** The same grid re-reads by **Workouts**, **Food**,
-**Drinks** or **Sleep**. Colour keeps one meaning throughout — green at the good
-end, warm at the less good — while the glyph is whatever is fastest to read: a
-face for workouts, a food icon, a drinks count, hours slept. Flip to Drinks and
-a month's pattern is just *there*.
+**Five lenses on the month.** Past the **Day** score, the same grid re-reads by
+**Moved** (coloured by activity), **Food**, **Drinks** or **Sleep**. The glyph
+is whatever is fastest to read: a face, a food icon, a drinks count, hours
+slept. Flip to Drinks and a month's pattern is just *there*.
 
 **Logging a workout** — type, title, duration,
 distance, elevation, average HR, calories and effort (RPE 1–10), plus free
@@ -205,6 +216,7 @@ js/
   util/units.js         metric/imperial display, pace, speed, durations
   util/dom.js           element helper, toasts, dialogs, file pick/download
   metrics.js            food and drink scales, colour ramps, calendar lenses
+  score.js              the day score: weights, rest credit, weekend slack
   exercises.js          muscle groups, the exercise library, set/volume maths
   ui/calendar.js        month grid, lens switcher, streaks, recent list
   ui/checkin.js         the daily check-in sheet
@@ -242,6 +254,10 @@ Two things to remember:
   with your data, so they survive and export alongside it.
 - Colours all come from the tokens at the top of `css/app.css`, defined once
   for light and again for dark.
+- The day score lives entirely in `js/score.js` — `WEIGHTS` sets the balance,
+  `BANDS` the faces and cutoffs, the drink curves the weekend allowance, and
+  `LOOKBACK` how fast rest credit decays. Nothing else needs touching to
+  retune it.
 - The typeface is Figtree, shipped as a single variable `.woff2` in
   `assets/fonts/` rather than pulled from a CDN, so the app has no external
   dependencies and looks the same offline. Swapping it means replacing that

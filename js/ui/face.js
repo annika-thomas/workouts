@@ -18,6 +18,12 @@ const FACES = {
   focused: EYES + '<path d="M9.6 15h4.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
   // Rest day: eyes shut.
   sleepy: SLEEPY_EYES + '<path d="M10.2 14.6q1.8 1.7 3.6 0" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+  // Middle of the road: flat mouth, no verdict either way.
+  neutral: EYES + '<path d="M9.6 15h4.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
+  // Slipping: a shallow frown.
+  unsure: EYES + '<path d="M9.2 15.6q2.8-2.3 5.6 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
+  // Rough: a clear one.
+  sad: EYES + '<path d="M8.8 16q3.2-3.2 6.4 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
 };
 
 export const FACE_KINDS = Object.keys(FACES);

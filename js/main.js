@@ -100,6 +100,9 @@ function boot() {
     }
   });
 
+  // Handy for debugging from the console, and for the test harness.
+  window.__store = store;
+
   registerServiceWorker();
 }
 

@@ -6,6 +6,7 @@ import { typeInfo } from '../types.js';
 import { formatDay, relativeDay } from '../util/date.js';
 import { DIET, DRINK_STEPS } from '../metrics.js';
 import { entryVolume } from '../exercises.js';
+import { faceEl } from './face.js';
 import {
   formatDuration, formatDistance, formatEffortRate, weightLabel, kgToDisplay, displayToKg, round,
 } from '../util/units.js';
@@ -122,6 +123,7 @@ export function renderDay(sheet, dayKey) {
   }
 
   const body = el('div', {},
+    scoreCard(dayKey),
     el('div', { class: 'card-title' }, `Workouts${workouts.length ? ` · ${workouts.length}` : ''}`),
     list,
     el('button', {
@@ -184,6 +186,45 @@ function workoutRow(w, units, onClick) {
       w.notes ? el('div', { class: 'meta' }, el('span', {}, truncate(w.notes, 70))) : null,
     ),
     w.source && w.source !== 'manual' ? el('span', { class: 'src' }, w.source) : null,
+  );
+}
+
+/**
+ * Why the day scored what it did. Worth showing rather than leaving the face
+ * to be guessed at — the rest credit and weekend allowance are invisible
+ * otherwise.
+ */
+function scoreCard(dayKey) {
+  const scored = store.scoreFor(dayKey);
+  if (!scored) return el('span', {});
+
+  const bars = el('div', { class: 'breakdown', style: { marginTop: '4px' } },
+    ...scored.parts.map((p) => el('div', { class: 'bd' },
+      el('span', { class: 'nm', style: { width: '66px' } }, p.label),
+      el('span', { class: 'track' },
+        el('span', {
+          class: 'fill',
+          style: { width: `${Math.round(p.value * 100)}%`, background: scored.band.color },
+        })),
+      el('span', { class: 'n', style: { minWidth: '92px' } }, p.detail),
+    )),
+  );
+
+  return el('div', { class: 'card score-card' },
+    el('div', { class: 'score-head' },
+      el('span', {
+        class: 'score-face',
+        style: { background: scored.band.color },
+      }, faceEl(scored.band.face)),
+      el('div', { class: 'row-main' },
+        el('div', { class: 'row-title' }, scored.band.label),
+        el('div', { class: 'row-sub' },
+          scored.parts.length < 3
+            ? `From the ${scored.parts.length} thing${scored.parts.length === 1 ? '' : 's'} you logged — check in for the full picture`
+            : 'Movement, food and drinks'),
+      ),
+    ),
+    bars,
   );
 }
 

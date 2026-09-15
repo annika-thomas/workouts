@@ -17,7 +17,7 @@ export function calendarView(root, ctx) {
   const today = new Date();
   // Cursor persists across tab switches within a session.
   ctx.cal ||= { year: today.getFullYear(), month: today.getMonth() };
-  ctx.lens ||= 'workouts';
+  ctx.lens ||= 'day';
 
   function render() {
     clear(root);
@@ -119,8 +119,20 @@ export function calendarView(root, ctx) {
  * reads fastest for that metric — a face for workouts, an icon for food,
  * a bare number for counts.
  */
-function bubbleFor(lens, items, day) {
+function bubbleFor(lens, items, day, dayKey) {
   switch (lens) {
+    case 'day': {
+      const scored = store.scoreFor(dayKey);
+      if (!scored) return null;
+      return {
+        fill: scored.band.color,
+        node: faceEl(scored.band.face),
+        // One component isn't enough to call a day; show it faded rather than
+        // pretending a weigh-in alone earned a green face.
+        partial: scored.parts.length < 2,
+        title: `${scored.band.label} — ${scored.parts.map((p) => `${p.label.toLowerCase()} ${p.detail}`).join(', ')}`,
+      };
+    }
     case 'food': {
       const d = dietInfo(day?.diet);
       return d && { fill: d.color, node: el('span', { class: 'glyph e' }, d.icon), title: d.label };
@@ -157,12 +169,13 @@ function bubbleFor(lens, items, day) {
 /** One day: a pastel bubble, and the date underneath. */
 function dayCell(cell, items, tKey, lens) {
   const dayMeta = store.day(cell.key);
-  const shown = bubbleFor(lens, items, dayMeta);
+  const shown = bubbleFor(lens, items, dayMeta, cell.key);
 
   const classes = ['day'];
   if (!shown) classes.push('is-empty');
   if (cell.key > tKey) classes.push('is-future');
   if (cell.key === tKey) classes.push('is-today');
+  if (shown?.partial) classes.push('is-partial');
 
   const bubble = el('div', {
     class: 'bubble',

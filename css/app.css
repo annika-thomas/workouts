@@ -835,7 +835,9 @@ select {
   background: var(--surface-2);
   overflow: hidden;
 }
-.breakdown .bd .fill { height: 100%; border-radius: var(--pill); transition: width .35s ease; }
+/* A span is inline by default, so width/height were being ignored entirely
+   and every bar rendered as an empty track. */
+.breakdown .bd .fill { display: block; height: 100%; border-radius: var(--pill); transition: width .35s ease; }
 .breakdown .bd .n { font-size: 12.5px; color: var(--text-2); font-weight: 700; min-width: 52px; text-align: right; }
 
 .dotgrid {
@@ -1177,3 +1179,23 @@ select {
   letter-spacing: 0;
   font-weight: 700;
 }
+
+/* ============================================================
+   Day score card
+   ============================================================ */
+.score-card { padding: 14px 16px 16px; }
+.score-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.score-face {
+  width: 46px; height: 46px;
+  flex: none;
+  border-radius: 50%;
+  color: var(--face);
+  display: grid;
+  place-items: center;
+}
+.score-face .face { width: 34px; height: 34px; }
+.score-card .bd .nm { color: var(--text-2); font-weight: 650; }
+.score-card .bd .n { font-weight: 600; color: var(--text-2); text-align: right; }
+
+/* A day scored from only one of the three components. */
+.day.is-partial .bubble { opacity: .45; }
