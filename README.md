@@ -138,6 +138,7 @@ index.html              markup shell — loads one ES module
 manifest.webmanifest    PWA manifest (home-screen name, icons, colours)
 sw.js                   service worker: offline cache of the app shell
 css/app.css             all styling; design tokens at the top
+assets/fonts/           Figtree, self-hosted so type works offline too
 js/
   main.js               boot, tab routing, the floating add button
   store.js              the data model, persistence, and derived stats
@@ -171,5 +172,9 @@ Two things to remember:
   needs a migration in `store.js`.
 - Colours all come from the tokens at the top of `css/app.css`, defined once
   for light and again for dark.
+- The typeface is Figtree, shipped as a single variable `.woff2` in
+  `assets/fonts/` rather than pulled from a CDN, so the app has no external
+  dependencies and looks the same offline. Swapping it means replacing that
+  file and the `@font-face` and `--font` lines at the top of the stylesheet.
 - After editing any file, bump `CACHE` in `sw.js`. Otherwise a phone that has
   already installed the app keeps serving the old version.

@@ -1,4 +1,15 @@
 /* ============================================================
+   Type — Figtree, self-hosted so it works offline like the rest
+   ============================================================ */
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 400 800;   /* one variable file covers every weight used */
+  font-display: swap;
+  src: url('../assets/fonts/figtree-latin.woff2') format('woff2');
+}
+
+/* ============================================================
    Tokens — warm, pastel, light-first
    ============================================================ */
 :root {
@@ -37,8 +48,8 @@
 
   --shadow:    0 2px 14px rgba(70, 82, 60, .07);
   --shadow-lg: 0 10px 34px rgba(50, 62, 42, .16);
-  --font: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont,
-          'Segoe UI Variable Display', 'Segoe UI', Roboto, system-ui, sans-serif;
+  --font: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          system-ui, 'Helvetica Neue', sans-serif;
 }
 
 :root[data-theme='dark'] {
@@ -109,7 +120,7 @@ button { cursor: pointer; border: none; background: none; }
 img { max-width: 100%; }
 [hidden] { display: none !important; }
 
-h1, h2, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -0.01em; }
+h1, h2, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -0.015em; }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: .001s !important; transition-duration: .001s !important; }
@@ -460,7 +471,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -0.01em; }
 .stat .v {
   font-size: 18px;
   font-weight: 800;
-  letter-spacing: -.03em;
+  letter-spacing: -.02em;
   white-space: nowrap;
   overflow: hidden;
 }

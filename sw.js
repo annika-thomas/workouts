@@ -2,7 +2,7 @@
  * Offline shell. Bump CACHE when you change any file below, otherwise an
  * installed copy on your phone will keep serving the old one.
  */
-const CACHE = 'workouts-v2';
+const CACHE = 'workouts-v3';
 
 const SHELL = [
   './',
@@ -30,6 +30,7 @@ const SHELL = [
   './js/integrations/strava.js',
   './js/integrations/gist.js',
   './assets/icon.svg',
+  './assets/fonts/figtree-latin.woff2',
 ];
 
 self.addEventListener('install', (event) => {
