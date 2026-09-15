@@ -33,15 +33,33 @@ averages.
 
 ## Get it on your phone
 
-1. **Settings → Pages** in this repo → Source: **GitHub Actions**.
-2. Push to the default branch (or run *Deploy to GitHub Pages* manually from the
-   **Actions** tab). The workflow deploys whichever branch is the repo default,
-   so it keeps working if you later rename it to `main`.
-3. Open `https://annika-thomas.github.io/workouts/`.
-4. On iPhone: Share → **Add to Home Screen**. On Android: menu → **Install app**.
+**One time**, switch Pages on: **Settings → Pages → Build and deployment →
+Source: GitHub Actions**. This step has to be done by hand — creating a Pages
+site needs repo-admin rights that a workflow's token isn't allowed to have, so
+the deploy fails with *"Get Pages site failed"* until you do it.
 
-*Source: Deploy from a branch* works too — there's no build step, the repo root
-is the site.
+Then **Actions → Deploy to GitHub Pages → Run workflow**. After that every push
+to the default branch deploys on its own; the workflow reads whichever branch
+that is, so renaming it to `main` later changes nothing.
+
+The site lands at `https://annika-thomas.github.io/workouts/`.
+
+*Source: Deploy from a branch* (branch, folder `/`) works just as well — there's
+no build step, the repo root is the site.
+
+### Add it to your home screen
+
+- **iPhone** — open the URL in **Safari** (this doesn't work from Chrome), tap
+  Share, then **Add to Home Screen**.
+- **Android** — open it in Chrome, tap ⋮, then **Install app**.
+
+It gets its own icon, opens full-screen with no browser chrome, and works
+offline.
+
+> On iOS the installed app gets a **separate storage box from Safari**. Anything
+> you logged in Safari beforehand won't appear in it. Either start logging after
+> you've installed it, or move your entries across with Settings → Backup JSON
+> and then Restore inside the installed app.
 
 It then opens full-screen with its own icon, works offline, and keeps its data
 between launches.
