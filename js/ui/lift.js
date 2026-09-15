@@ -11,7 +11,7 @@ import { kgToDisplay, displayToKg, weightLabel, round } from '../util/units.js';
  * Returns a node plus a read() the editor calls on save, so this owns its own
  * draft state and the editor stays unaware of the shape of a set.
  */
-export function liftSection({ workoutId, entries, getSheet, restore }) {
+export function liftSection({ workoutId, entries, getSheet, restore, onChange }) {
   const units = store.settings.units;
   const draft = entries.map((e) => ({ ...e, sets: (e.sets || []).map((s) => ({ ...s })) }));
   // Which exercise is open for editing. New ones open automatically.
@@ -26,6 +26,7 @@ export function liftSection({ workoutId, entries, getSheet, restore }) {
   }
 
   function draw() {
+    onChange?.();
     root.replaceChildren();
 
     for (const [i, entry] of draft.entries()) {
@@ -170,6 +171,13 @@ export function liftSection({ workoutId, entries, getSheet, restore }) {
 
   return {
     node: root,
+    /** Swap the whole list, for applying a routine. */
+    replaceAll(next) {
+      draft.length = 0;
+      draft.push(...next.map((e) => ({ ...e, sets: (e.sets || []).map((x) => ({ ...x })) })));
+      openIndex = -1;
+      draw();
+    },
     read: () => draft
       .map((e) => ({ ...e, sets: e.sets.filter((s) => toNum(s.reps) > 0) }))
       .filter((e) => e.sets.length),

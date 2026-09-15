@@ -41,6 +41,14 @@ and weight per set. Adding an exercise prefills the sets you did last time, and
 exercise summarises as you go (`3 × 8 @ 60 kg`) and the workout totals its sets
 and load.
 
+**Routines for the ones you rotate.** Built a session you'll do again? Tap
+**Save as a routine** and name it. It then sits in the log chooser — tap
+*Lower body A* and the editor opens with the whole exercise list in place.
+Applying a routine fills each exercise from the *last time you did it*, not
+from whatever the routine was saved with, so your weights carry forward
+instead of resetting. Saving under a name you already have updates that
+routine; **Settings → Routines** lists and deletes them.
+
 **Progress by muscle group.** The **Muscles** tab takes a muscle — glutes, say —
 and shows sets per week, load per session, and every exercise hitting it, ranked
 by how much it actually contributes. Tap an exercise for its own progression:
@@ -202,6 +210,7 @@ js/
   ui/checkin.js         the daily check-in sheet
   ui/chooser.js         what the centre button offers
   ui/lift.js            exercise list and set entry inside the editor
+  ui/routines.js        saving, reusing and managing saved workouts
   ui/exercisePicker.js  searchable exercise list, plus custom ones
   ui/muscles.js         the Muscles tab and per-exercise progression
   ui/chart.js           the shared line chart

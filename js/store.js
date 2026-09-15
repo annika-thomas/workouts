@@ -26,6 +26,7 @@ function emptyState() {
     workouts: {},   // id -> workout
     days: {},       // 'YYYY-MM-DD' -> daily metrics
     exercises: {},  // id -> user-created exercise definitions
+    routines: {},   // id -> a saved workout you start from again
     settings: structuredClone(DEFAULT_SETTINGS),
   };
 }
@@ -260,6 +261,71 @@ class Store extends EventTarget {
     return totals;
   }
 
+  // ---- routines ---------------------------------------------------------
+
+  /** Most recently used first, so the ones you rotate stay at the front. */
+  get routines() {
+    return Object.values(this.state.routines).sort((a, b) =>
+      (b.lastUsed || '').localeCompare(a.lastUsed || '') || a.name.localeCompare(b.name));
+  }
+
+  /**
+   * Upsert by name, so re-saving "Lower body A" updates it rather than
+   * leaving you with two of them.
+   */
+  saveRoutine({ id, name, type, title, exercises }) {
+    const clean = name.trim();
+    const existing = id
+      ? this.state.routines[id]
+      : Object.values(this.state.routines).find((r) => r.name.toLowerCase() === clean.toLowerCase());
+    const now = new Date().toISOString();
+    const record = {
+      id: existing?.id || newId(),
+      name: clean,
+      type: type || 'lift',
+      title: (title || '').trim(),
+      exercises: normaliseEntries(exercises),
+      createdAt: existing?.createdAt || now,
+      updatedAt: now,
+      lastUsed: existing?.lastUsed || null,
+    };
+    this.state.routines[record.id] = record;
+    this.changed({ kind: 'routine', id: record.id });
+    return record;
+  }
+
+  deleteRoutine(id) {
+    delete this.state.routines[id];
+    this.changed({ kind: 'routine', id });
+  }
+
+  touchRoutine(id) {
+    const r = this.state.routines[id];
+    if (!r) return;
+    r.lastUsed = new Date().toISOString();
+    this.save();
+  }
+
+  /**
+   * Turn a routine into a workout draft. Sets come from the last time you did
+   * each exercise where possible — the routine's own sets are the fallback,
+   * so the first run follows the plan and later ones follow your progress.
+   */
+  draftFromRoutine(id) {
+    const r = this.state.routines[id];
+    if (!r) return null;
+    return {
+      type: r.type,
+      title: r.title || r.name,
+      exercises: r.exercises.map((e) => ({
+        exerciseId: e.exerciseId,
+        name: e.name,
+        notes: '',
+        sets: this.lastSetsFor(e.exerciseId) || e.sets.map((x) => ({ ...x })),
+      })),
+    };
+  }
+
   // ---- daily metrics ----------------------------------------------------
 
   day(dayKey) {
@@ -381,6 +447,7 @@ class Store extends EventTarget {
       workouts: this.state.workouts,
       days: this.state.days,
       exercises: this.state.exercises,
+      routines: this.state.routines,
       settings: redactSecrets(this.state.settings),
     };
   }
@@ -393,7 +460,12 @@ class Store extends EventTarget {
     if (!data || typeof data !== 'object') throw new Error('Not a valid backup file.');
     const incomingWorkouts = data.workouts || {};
     const incomingDays = data.days || {};
-    if (replace) { this.state.workouts = {}; this.state.days = {}; this.state.exercises = {}; }
+    if (replace) {
+      this.state.workouts = {};
+      this.state.days = {};
+      this.state.exercises = {};
+      this.state.routines = {};
+    }
 
     let added = 0, updated = 0;
     for (const [id, w] of Object.entries(incomingWorkouts)) {
@@ -405,6 +477,10 @@ class Store extends EventTarget {
     // replace-restore there is nothing here to preserve anyway.
     for (const [id, ex] of Object.entries(data.exercises || {})) {
       this.state.exercises[id] = ex;
+    }
+    for (const [id, r] of Object.entries(data.routines || {})) {
+      const mine = this.state.routines[id];
+      if (!mine || (r.updatedAt || '') > (mine.updatedAt || '')) this.state.routines[id] = r;
     }
     let dayCount = 0;
     for (const [key, d] of Object.entries(incomingDays)) {

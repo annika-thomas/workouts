@@ -1,8 +1,9 @@
-import { el, toast, haptic, confirmDialog } from '../util/dom.js';
+import { el, clear, toast, haptic, confirmDialog } from '../util/dom.js';
 import { openSheet } from './sheet.js';
 import { store } from '../store.js';
 import { TYPES, typeInfo } from '../types.js';
 import { liftSection } from './lift.js';
+import { openSaveRoutine, routineChips } from './routines.js';
 import { formatDay, relativeDay } from '../util/date.js';
 import {
   distanceLabel, elevLabel, kmToDisplay, displayToKm, mToElev, elevToM, round,
@@ -12,7 +13,7 @@ import {
  * Add or edit one workout. `sheet` lets a caller reuse an already-open sheet
  * (the day view does this) instead of stacking a second scrim.
  */
-export function openEditor({ date, workout = null, sheet = null, onDone } = {}) {
+export function openEditor({ date, workout = null, sheet = null, routineId = null, onDone } = {}) {
   const units = store.settings.units;
   const draft = {
     id: workout?.id || null,
@@ -59,12 +60,15 @@ export function openEditor({ date, workout = null, sheet = null, onDone } = {}) 
   const liftField = el('div', { class: 'field' },
     el('span', { class: 'field-label' }, 'Exercises'));
   let lift = null;
+  let saveRoutineBtn = null;
 
   function syncDistance() {
     // Distance only makes sense for some types; keep the form short otherwise.
     distanceField.hidden = !typeInfo(draft.type).distance;
     // Sets and reps only make sense for strength work.
     liftField.hidden = !LIFT_TYPES.has(draft.type);
+    // Both are still being wired up during the lift section's first draw.
+    if (saveRoutineBtn) saveRoutineBtn.hidden = !lift || !lift.read().length;
   }
 
   distanceField.append(
@@ -107,10 +111,44 @@ export function openEditor({ date, workout = null, sheet = null, onDone } = {}) 
     entries: draft.exercises,
     getSheet: () => host,  // the sheet doesn't exist yet at this point
     restore: () => showForm(),
+    onChange: () => syncDistance(),
   });
-  liftField.append(lift.node);
+  saveRoutineBtn = el('button', {
+    class: 'btn btn-ghost btn-block btn-sm',
+    style: { marginTop: '8px' },
+    onclick: () => openSaveRoutine({
+      type: draft.type,
+      title: titleInput.value,
+      exercises: lift.read(),
+    }),
+  }, '☆ Save as a routine');
+
+  liftField.append(lift.node, saveRoutineBtn);
+
+  // Only offered on a new, still-empty workout — applying one to a workout
+  // you're part-way through would quietly discard what you'd typed.
+  const routineField = el('div', {});
+  function syncRoutines() {
+    clear(routineField);
+    if (draft.id || lift.read().length) return;
+    const chips = routineChips((r) => applyRoutine(r));
+    if (chips) routineField.append(chips);
+  }
+
+  function applyRoutine(routine) {
+    const next = store.draftFromRoutine(routine.id);
+    if (!next) return;
+    draft.type = next.type;
+    if (!titleInput.value.trim()) titleInput.value = next.title;
+    renderTypes();
+    syncDistance();
+    lift.replaceAll(next.exercises);
+    syncRoutines();
+    toast(`Loaded “${routine.name}”`);
+  }
 
   syncDistance();
+  syncRoutines();
 
   const form = el('div', {},
     el('div', { class: 'field' }, el('span', { class: 'field-label' }, 'Activity'), typeGrid),
@@ -121,6 +159,7 @@ export function openEditor({ date, workout = null, sheet = null, onDone } = {}) 
       ),
     ),
     el('div', { class: 'field' }, el('label', {}, 'Title'), titleInput),
+    routineField,
     liftField,
     el('div', { class: 'field' },
       el('div', { class: 'grid-3' },
@@ -221,5 +260,9 @@ export function openEditor({ date, workout = null, sheet = null, onDone } = {}) 
     host = ownSheet;
   }
   showForm();
+  if (routineId) {
+    const routine = store.state.routines[routineId];
+    if (routine) applyRoutine(routine);
+  }
   return host;
 }

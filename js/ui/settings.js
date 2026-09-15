@@ -3,6 +3,7 @@ import { openSheet } from './sheet.js';
 import { store } from '../store.js';
 import { applyTheme } from '../theme.js';
 import { openImportSheet, exportWorkoutsCsv, exportDaysCsv } from './importSheet.js';
+import { routinesCard } from './routines.js';
 import * as strava from '../integrations/strava.js';
 import * as gist from '../integrations/gist.js';
 
@@ -38,6 +39,9 @@ export function settingsView(root) {
       })));
 
     root.append(prefs);
+
+    // ---- routines -------------------------------------------------------
+    root.append(routinesCard(render));
 
     // ---- Strava ---------------------------------------------------------
     root.append(stravaCard(render));
