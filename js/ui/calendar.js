@@ -95,7 +95,7 @@ export function calendarView(root, ctx) {
     ));
 
     root.append(todayCard(render));
-    root.append(streakCard());
+    if (store.workouts.length) root.append(streakCard());
     root.append(recentCard());
   }
 
@@ -214,6 +214,7 @@ function todayCard(rerender) {
 
   return el('button', {
     class: 'card checkin-card',
+    style: { marginTop: '12px' },
     onclick: () => { haptic(); openCheckin(key, { onDone: rerender }); },
   },
     el('span', { class: 'emo', style: { background: done ? '#d9eecf' : '#e8eef8' } }, done ? '✓' : '🌿'),

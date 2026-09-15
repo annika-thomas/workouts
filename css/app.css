@@ -768,7 +768,7 @@ select {
 .row select, .row input[type='number'] { width: auto; min-width: 92px; min-height: 42px; }
 
 /* Round pastel badge used down the left of settings & summary rows */
-.row .emo {
+.emo {
   width: 40px; height: 40px;
   flex: none;
   border-radius: 50%;
