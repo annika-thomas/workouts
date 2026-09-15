@@ -16,20 +16,35 @@ sit as quiet empty circles. A second activity shows up as a small companion
 dot, and a dot beside the date means you logged sleep, weight or a note.
 Swipe left and right between months.
 
-**Logging** — tap a day (or the `+` button) and record type, title, duration,
+**Two things to log.** The centre button asks which: a **workout**, or a
+**daily check-in** — weight, how you ate, drinks, sleep. The check-in is
+tap-first, so a daily weigh-in is two taps from opening the app, and the
+Calendar carries a "How was today?" card that becomes a summary once you've
+filled it in.
+
+**Four lenses on the month.** The same grid re-reads by **Workouts**, **Food**,
+**Drinks** or **Sleep**. Colour keeps one meaning throughout — green at the good
+end, warm at the less good — while the glyph is whatever is fastest to read: a
+face for workouts, a food icon, a drinks count, hours slept. Flip to Drinks and
+a month's pattern is just *there*.
+
+**Logging a workout** — type, title, duration,
 distance, elevation, average HR, calories and effort (RPE 1–10), plus free
 notes. Distance and elevation only appear for activities where they make
 sense, and pace is shown the way each sport reads it: `/km` for runs, `km/h`
 for rides, `/100m` for swims.
 
-**How the day felt** — per-day sleep hours and quality, resting HR, weight,
-steps, energy, soreness and notes. These are what turn "did I train?" into
-"why did that week feel awful?".
+**How the day felt** — sleep hours and quality, resting HR, weight, steps, how
+you ate (five steps, indulgent to clean), standard drinks, energy, soreness and
+notes. These are what turn "did I train?" into "why did that week feel
+awful?".
 
 **Stats** — sessions, active days, total time and distance over 30/90/365 days
 or all time; current and longest streak; sessions per week against a goal you
-set; a breakdown by activity; a consistency grid; and sleep/resting-HR/weight
-averages.
+set; a breakdown by activity; a six-month consistency grid; a weight chart with
+the change across the range; drinks totals, per-week rate, alcohol-free days and
+days since your last one; how you ate as a distribution; and sleep and
+resting-HR averages.
 
 ## Get it on your phone
 
@@ -165,7 +180,10 @@ js/
   util/date.js          local-day keys, month grids, loose date parsing
   util/units.js         metric/imperial display, pace, speed, durations
   util/dom.js           element helper, toasts, dialogs, file pick/download
-  ui/calendar.js        month grid, streaks, recent list
+  metrics.js            food and drink scales, colour ramps, calendar lenses
+  ui/calendar.js        month grid, lens switcher, streaks, recent list
+  ui/checkin.js         the daily check-in sheet
+  ui/chooser.js         what the centre button offers
   ui/day.js             day sheet: workouts + how the day felt
   ui/editor.js          add/edit one workout
   ui/stats.js           ranges, weekly chart, breakdowns, consistency grid
