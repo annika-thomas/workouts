@@ -6,12 +6,14 @@ import { applyTheme, watchSystemTheme } from './theme.js';
 import { calendarView } from './ui/calendar.js';
 import { statsView } from './ui/stats.js';
 import { settingsView } from './ui/settings.js';
+import { musclesView } from './ui/muscles.js';
 import { openLogChooser } from './ui/chooser.js';
 import * as strava from './integrations/strava.js';
 
 const TABS = [
   { key: 'calendar', label: 'Calendar', icon: 'calendar', render: calendarView },
   { key: 'stats',    label: 'Stats',    icon: 'chart',    render: statsView },
+  { key: 'muscles',  label: 'Muscles',  icon: 'muscle',   render: musclesView },
   { key: 'settings', label: 'Settings', icon: 'settings', render: settingsView },
 ];
 
@@ -49,6 +51,7 @@ function boot() {
     tabButton(TABS[1]),
     el('span', { class: 'notch', 'aria-hidden': 'true' }),
     tabButton(TABS[2]),
+    tabButton(TABS[3]),
   );
 
   const fab = el('button', {

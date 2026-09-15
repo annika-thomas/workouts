@@ -34,6 +34,22 @@ notes. Distance and elevation only appear for activities where they make
 sense, and pace is shown the way each sport reads it: `/km` for runs, `km/h`
 for rides, `/100m` for swims.
 
+**Lifting gets its own interface.** Pick **Lift** and the editor grows an
+exercise list: search 89 built-in movements (or add your own), then type reps
+and weight per set. Adding an exercise prefills the sets you did last time, and
+"+ Add set" copies the row above — a repeat session is a handful of taps. Each
+exercise summarises as you go (`3 × 8 @ 60 kg`) and the workout totals its sets
+and load.
+
+**Progress by muscle group.** The **Muscles** tab takes a muscle — glutes, say —
+and shows sets per week, load per session, and every exercise hitting it, ranked
+by how much it actually contributes. Tap an exercise for its own progression:
+top set over time, best set, and every session you've logged. Each exercise
+names the muscles it works with the *primary* one first; sets and load count
+fully toward that one and half toward the rest, so accessory work registers
+without drowning out the lift that earned it. Exercises that only assist the
+muscle you're viewing are marked.
+
 **How the day felt** — sleep hours and quality, resting HR, weight, steps, how
 you ate (five steps, indulgent to clean), standard drinks, energy, soreness and
 notes. These are what turn "did I train?" into "why did that week feel
@@ -181,9 +197,14 @@ js/
   util/units.js         metric/imperial display, pace, speed, durations
   util/dom.js           element helper, toasts, dialogs, file pick/download
   metrics.js            food and drink scales, colour ramps, calendar lenses
+  exercises.js          muscle groups, the exercise library, set/volume maths
   ui/calendar.js        month grid, lens switcher, streaks, recent list
   ui/checkin.js         the daily check-in sheet
   ui/chooser.js         what the centre button offers
+  ui/lift.js            exercise list and set entry inside the editor
+  ui/exercisePicker.js  searchable exercise list, plus custom ones
+  ui/muscles.js         the Muscles tab and per-exercise progression
+  ui/chart.js           the shared line chart
   ui/day.js             day sheet: workouts + how the day felt
   ui/editor.js          add/edit one workout
   ui/stats.js           ranges, weekly chart, breakdowns, consistency grid
@@ -206,6 +227,10 @@ Two things to remember:
 - Add an activity type in `js/types.js` — its `color` is the pastel its day
   circles take. The `key` is what gets stored, so renaming an existing one
   needs a migration in `store.js`.
+- Add an exercise to `js/exercises.js` as `[id, name, 'primary secondary …',
+  equipment]`. Muscle order matters: the first one gets full credit in the
+  Muscles tab. You can also add exercises from inside the app — they're stored
+  with your data, so they survive and export alongside it.
 - Colours all come from the tokens at the top of `css/app.css`, defined once
   for light and again for dark.
 - The typeface is Figtree, shipped as a single variable `.woff2` in

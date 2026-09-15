@@ -2,6 +2,7 @@
 // backup is literally one JSON blob you can email yourself.
 
 import { todayKey, monthKey, addDays, daysBetween, weekStartKey } from './util/date.js';
+import { findExercise, muscleShare, entryVolume } from './exercises.js';
 
 const STORAGE_KEY = 'workouts.v1';
 const SCHEMA_VERSION = 1;
@@ -24,6 +25,7 @@ function emptyState() {
     version: SCHEMA_VERSION,
     workouts: {},   // id -> workout
     days: {},       // 'YYYY-MM-DD' -> daily metrics
+    exercises: {},  // id -> user-created exercise definitions
     settings: structuredClone(DEFAULT_SETTINGS),
   };
 }
@@ -137,6 +139,7 @@ class Store extends EventTarget {
       avgHr: numOrNull(workout.avgHr),
       calories: numOrNull(workout.calories),
       notes: (workout.notes || '').trim(),
+      exercises: normaliseEntries(workout.exercises ?? existing?.exercises),
       source: workout.source || existing?.source || 'manual',
       externalId: workout.externalId || existing?.externalId || null,
       createdAt: existing?.createdAt || now,
@@ -157,6 +160,101 @@ class Store extends EventTarget {
     if (!externalId) return null;
     const ext = String(externalId);
     return this.workouts.find((w) => w.source === source && String(w.externalId) === ext) || null;
+  }
+
+  // ---- exercise library -------------------------------------------------
+
+  get customExercises() { return this.state.exercises; }
+
+  addCustomExercise(exercise) {
+    this.state.exercises[exercise.id] = exercise;
+    this.changed({ kind: 'exercise', id: exercise.id });
+    return exercise;
+  }
+
+  lookupExercise(id) {
+    return findExercise(id, this.state.exercises);
+  }
+
+  /** Every lift entry for one exercise, newest first, with its workout's date. */
+  historyFor(exerciseId) {
+    const out = [];
+    for (const w of this.workouts) {
+      for (const entry of w.exercises || []) {
+        if (entry.exerciseId === exerciseId && (entry.sets || []).length) {
+          out.push({ date: w.date, workoutId: w.id, entry });
+        }
+      }
+    }
+    return out.sort((a, b) => b.date.localeCompare(a.date));
+  }
+
+  /** The sets you did last time, to prefill today's. */
+  lastSetsFor(exerciseId, beforeWorkoutId = null) {
+    const prior = this.historyFor(exerciseId).find((h) => h.workoutId !== beforeWorkoutId);
+    return prior ? prior.entry.sets.map((s) => ({ ...s })) : null;
+  }
+
+  /**
+   * Per-day work for one muscle across a range. `sets` and `volume` are both
+   * share-weighted, so an exercise that only assists counts half.
+   */
+  muscleSeries(muscle, fromKeyStr, toKeyStr) {
+    const byDate = {};
+    for (const w of this.workouts) {
+      if (w.date < fromKeyStr || w.date > toKeyStr) continue;
+      for (const entry of w.exercises || []) {
+        const ex = this.lookupExercise(entry.exerciseId);
+        const share = muscleShare(ex, muscle);
+        if (!share || !(entry.sets || []).length) continue;
+        const d = (byDate[w.date] ||= { date: w.date, sets: 0, volume: 0, reps: 0 });
+        d.sets += entry.sets.length * share;
+        d.volume += entryVolume(entry) * share;
+        d.reps += entry.sets.reduce((n, x) => n + (x.reps || 0), 0) * share;
+      }
+    }
+    return Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  /** Exercises hitting a muscle, with how recently and how heavily. */
+  muscleExercises(muscle, fromKeyStr, toKeyStr) {
+    const agg = {};
+    for (const w of this.workouts) {
+      if (w.date < fromKeyStr || w.date > toKeyStr) continue;
+      for (const entry of w.exercises || []) {
+        const ex = this.lookupExercise(entry.exerciseId);
+        if (!muscleShare(ex, muscle) || !(entry.sets || []).length) continue;
+        const share = muscleShare(ex, muscle);
+        const a = (agg[entry.exerciseId] ||= {
+          exerciseId: entry.exerciseId, exercise: ex, sets: 0, weightedSets: 0,
+          volume: 0, sessions: 0, lastDate: null, primary: share === 1,
+        });
+        a.sets += entry.sets.length;
+        a.weightedSets += entry.sets.length * share;
+        a.volume += entryVolume(entry);
+        a.sessions += 1;
+        if (!a.lastDate || w.date > a.lastDate) a.lastDate = w.date;
+      }
+    }
+    // Rank by what each exercise actually contributes to THIS muscle, so a
+    // quad lift that merely assists can't outrank the movement doing the work.
+    return Object.values(agg).sort((a, b) => b.weightedSets - a.weightedSets);
+  }
+
+  /** Muscles worked in a range, most-worked first. Powers the picker's badges. */
+  muscleTotals(fromKeyStr, toKeyStr) {
+    const totals = {};
+    for (const w of this.workouts) {
+      if (w.date < fromKeyStr || w.date > toKeyStr) continue;
+      for (const entry of w.exercises || []) {
+        const ex = this.lookupExercise(entry.exerciseId);
+        if (!ex || !(entry.sets || []).length) continue;
+        for (const m of ex.muscles) {
+          totals[m] = (totals[m] || 0) + entry.sets.length * muscleShare(ex, m);
+        }
+      }
+    }
+    return totals;
   }
 
   // ---- daily metrics ----------------------------------------------------
@@ -279,6 +377,7 @@ class Store extends EventTarget {
       exportedAt: new Date().toISOString(),
       workouts: this.state.workouts,
       days: this.state.days,
+      exercises: this.state.exercises,
       settings: redactSecrets(this.state.settings),
     };
   }
@@ -299,6 +398,9 @@ class Store extends EventTarget {
       if (!mine) { this.state.workouts[id] = w; added++; }
       else if ((w.updatedAt || '') > (mine.updatedAt || '')) { this.state.workouts[id] = w; updated++; }
     }
+    for (const [id, ex] of Object.entries(data.exercises || {})) {
+      this.state.exercises[id] ||= ex;
+    }
     let dayCount = 0;
     for (const [key, d] of Object.entries(incomingDays)) {
       const mine = this.state.days[key];
@@ -314,6 +416,19 @@ class Store extends EventTarget {
     this.state.settings = settings; // keep prefs & connections
     this.changed({ kind: 'bulk' });
   }
+}
+
+/** Keep only well-formed sets, so a half-filled row never reaches storage. */
+function normaliseEntries(entries) {
+  if (!Array.isArray(entries)) return [];
+  return entries.map((e) => ({
+    exerciseId: e.exerciseId,
+    name: e.name || '',
+    notes: (e.notes || '').trim(),
+    sets: (e.sets || [])
+      .map((s) => ({ reps: numOrNull(s.reps), weightKg: numOrNull(s.weightKg) }))
+      .filter((s) => s.reps != null && s.reps > 0),
+  })).filter((e) => e.exerciseId);
 }
 
 function numOrNull(v) {

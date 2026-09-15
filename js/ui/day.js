@@ -5,6 +5,7 @@ import { store } from '../store.js';
 import { typeInfo } from '../types.js';
 import { formatDay, relativeDay } from '../util/date.js';
 import { DIET, DRINK_STEPS } from '../metrics.js';
+import { entryVolume } from '../exercises.js';
 import {
   formatDuration, formatDistance, formatEffortRate, weightLabel, kgToDisplay, displayToKg, round,
 } from '../util/units.js';
@@ -172,6 +173,7 @@ function workoutRow(w, units, onClick) {
     w.distanceKm ? formatDistance(w.distanceKm, units) : null,
     formatEffortRate(w, t.pace, units) || null,
     w.rpe ? `RPE ${w.rpe}` : null,
+    liftSummary(w, units),
   ].filter(Boolean);
 
   return el('button', { class: 'wo', onclick: onClick },
@@ -183,6 +185,21 @@ function workoutRow(w, units, onClick) {
     ),
     w.source && w.source !== 'manual' ? el('span', { class: 'src' }, w.source) : null,
   );
+}
+
+/** "4 exercises · 12 sets" for a lift, nothing for anything else. */
+function liftSummary(w, units) {
+  const entries = w.exercises || [];
+  if (!entries.length) return null;
+  const sets = entries.reduce((n, e) => n + (e.sets || []).length, 0);
+  const volume = entries.reduce((n, e) => n + entryVolume(e), 0);
+  const bits = [`${entries.length} exercise${entries.length === 1 ? '' : 's'}`,
+    `${sets} set${sets === 1 ? '' : 's'}`];
+  if (volume) {
+    const v = units === 'imperial' ? volume / 0.45359237 : volume;
+    bits.push(`${Math.round(v).toLocaleString()} ${units === 'imperial' ? 'lb' : 'kg'}`);
+  }
+  return bits.join(' · ');
 }
 
 function truncate(s, n) { return s.length > n ? s.slice(0, n - 1) + '…' : s; }

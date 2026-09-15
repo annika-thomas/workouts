@@ -17,6 +17,7 @@ const PATHS = {
   note: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
   flame: '<path d="M12 22c4 0 7-2.7 7-6.5 0-4.5-4-6-5.5-10C12 8 11 8.5 9.5 10 8 11.5 5 12.5 5 15.5 5 19.3 8 22 12 22z"/>',
   check: '<path d="M20 6L9 17l-5-5"/>',
+  muscle: '<path d="M6.5 7.5v9M3.5 9.5v5M17.5 7.5v9M20.5 9.5v5M6.5 12h11"/>',
 };
 
 export function icon(name, cls = '') {

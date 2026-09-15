@@ -2,6 +2,7 @@ import { el, toast, haptic, confirmDialog } from '../util/dom.js';
 import { openSheet } from './sheet.js';
 import { store } from '../store.js';
 import { TYPES, typeInfo } from '../types.js';
+import { liftSection } from './lift.js';
 import { formatDay, relativeDay } from '../util/date.js';
 import {
   distanceLabel, elevLabel, kmToDisplay, displayToKm, mToElev, elevToM, round,
@@ -26,6 +27,7 @@ export function openEditor({ date, workout = null, sheet = null, onDone } = {}) 
     avgHr: workout?.avgHr ?? '',
     calories: workout?.calories ?? '',
     notes: workout?.notes || '',
+    exercises: workout?.exercises || [],
     source: workout?.source || 'manual',
     externalId: workout?.externalId || null,
   };
@@ -53,9 +55,16 @@ export function openEditor({ date, workout = null, sheet = null, onDone } = {}) 
     value: draft.elevationM != null ? String(Math.round(mToElev(draft.elevationM, units))) : '',
   });
 
+  const LIFT_TYPES = new Set(['lift', 'mobility', 'other']);
+  const liftField = el('div', { class: 'field' },
+    el('span', { class: 'field-label' }, 'Exercises'));
+  let lift = null;
+
   function syncDistance() {
     // Distance only makes sense for some types; keep the form short otherwise.
     distanceField.hidden = !typeInfo(draft.type).distance;
+    // Sets and reps only make sense for strength work.
+    liftField.hidden = !LIFT_TYPES.has(draft.type);
   }
 
   distanceField.append(
@@ -91,6 +100,16 @@ export function openEditor({ date, workout = null, sheet = null, onDone } = {}) 
 
   renderTypes();
   renderRpe();
+
+  // `restore` puts the editor back after the exercise picker borrows the sheet.
+  lift = liftSection({
+    workoutId: draft.id,
+    entries: draft.exercises,
+    getSheet: () => host,  // the sheet doesn't exist yet at this point
+    restore: () => showForm(),
+  });
+  liftField.append(lift.node);
+
   syncDistance();
 
   const form = el('div', {},
@@ -102,6 +121,7 @@ export function openEditor({ date, workout = null, sheet = null, onDone } = {}) 
       ),
     ),
     el('div', { class: 'field' }, el('label', {}, 'Title'), titleInput),
+    liftField,
     el('div', { class: 'field' },
       el('div', { class: 'grid-3' },
         el('div', {}, el('span', { class: 'field-label' }, 'Minutes'), durInput),
@@ -135,6 +155,7 @@ export function openEditor({ date, workout = null, sheet = null, onDone } = {}) 
       avgHr: hrInput.value,
       calories: calInput.value,
       notes: notesInput.value,
+      exercises: lift.read(),
       source: draft.source,
       externalId: draft.externalId,
     };
@@ -186,12 +207,17 @@ export function openEditor({ date, workout = null, sheet = null, onDone } = {}) 
   const heading = draft.id ? 'Edit workout' : 'Log a workout';
   const sub = relativeDay(draft.date) || formatDay(draft.date, true);
 
-  if (sheet) {
-    sheet.setTitle(heading, sub);
-    sheet.setBody(form);
-    sheet.setFooter(footer);
-    return sheet;
+  let host = sheet;
+  function showForm() {
+    host.setTitle(heading, sub);
+    host.setBody(form);
+    host.setFooter(footer);
   }
-  ownSheet = openSheet({ title: heading, subtitle: sub, body: form, footer });
-  return ownSheet;
+
+  if (!host) {
+    ownSheet = openSheet({ title: heading, subtitle: sub });
+    host = ownSheet;
+  }
+  showForm();
+  return host;
 }
