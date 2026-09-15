@@ -207,6 +207,28 @@ class Store extends EventTarget {
     return best;
   }
 
+  /**
+   * Days since the most recent drinking day. Deliberately not a "streak":
+   * a day you forgot to log shouldn't reset it, and this is the number that
+   * actually means something.
+   */
+  daysSinceLastDrink() {
+    const drinking = Object.values(this.state.days)
+      .filter((d) => d.drinks > 0)
+      .map((d) => d.date)
+      .sort();
+    const last = drinking.at(-1);
+    if (!last) return null;
+    return Math.max(0, daysBetween(last, todayKey()));
+  }
+
+  /** Daily records in an inclusive range, oldest first. */
+  daysIn(fromKeyStr, toKeyStr) {
+    return Object.values(this.state.days)
+      .filter((d) => d.date >= fromKeyStr && d.date <= toKeyStr)
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }
+
   /** Aggregate totals over an inclusive day-key range. */
   summary(fromKeyStr, toKeyStr) {
     const list = this.workouts.filter((w) => w.date >= fromKeyStr && w.date <= toKeyStr && w.type !== 'rest');

@@ -172,10 +172,11 @@ export function exportWorkoutsCsv() {
 /** Flat CSV of daily metrics. */
 export function exportDaysCsv() {
   const header = ['date', 'sleep_hours', 'sleep_quality', 'resting_hr', 'weight_kg',
-    'body_fat_pct', 'steps', 'energy', 'soreness', 'notes'];
+    'body_fat_pct', 'steps', 'energy', 'soreness', 'diet', 'drinks', 'notes'];
   const rows = Object.values(store.state.days)
     .sort((a, b) => a.date.localeCompare(b.date))
     .map((d) => [d.date, d.sleepHours ?? '', d.sleepQuality ?? '', d.restingHr ?? '', d.weightKg ?? '',
-      d.bodyFatPct ?? '', d.steps ?? '', d.energy ?? '', d.soreness ?? '', d.notes || '']);
+      d.bodyFatPct ?? '', d.steps ?? '', d.energy ?? '', d.soreness ?? '', d.diet ?? '',
+      d.drinks ?? '', d.notes || '']);
   download(`daily-metrics-${new Date().toISOString().slice(0, 10)}.csv`, toCsv([header, ...rows]), 'text/csv');
 }

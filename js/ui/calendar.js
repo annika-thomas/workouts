@@ -1,6 +1,10 @@
 import { el, clear, haptic } from '../util/dom.js';
 import { iconEl } from './icons.js';
 import { faceEl, faceForDay, primaryWorkout } from './face.js';
+import { openCheckin } from './checkin.js';
+import {
+  LENSES, lensLegend, dietInfo, drinksColor, drinksLabel, sleepColor, sleepLabel, hasCheckin,
+} from '../metrics.js';
 import { store } from '../store.js';
 import { typeInfo } from '../types.js';
 import {
@@ -13,6 +17,7 @@ export function calendarView(root, ctx) {
   const today = new Date();
   // Cursor persists across tab switches within a session.
   ctx.cal ||= { year: today.getFullYear(), month: today.getMonth() };
+  ctx.lens ||= 'workouts';
 
   function render() {
     clear(root);
@@ -38,6 +43,14 @@ export function calendarView(root, ctx) {
         : null,
     ));
 
+    // --- what the month is being read through ------------------------------
+    root.append(el('div', { class: 'seg lens-seg' },
+      ...LENSES.map((l) => el('button', {
+        'aria-pressed': String(l.key === ctx.lens),
+        onclick: () => { ctx.lens = l.key; haptic(4); render(); },
+      }, l.label)),
+    ));
+
     // --- weekday header + grid -------------------------------------------
     root.append(el('div', { class: 'cal-dow' },
       ...weekdayLabels(settings.weekStart).map((d) => el('span', {}, d)),
@@ -48,19 +61,26 @@ export function calendarView(root, ctx) {
       // Leading/trailing cells stay as empty space — the faces read better
       // without faded neighbours crowding them.
       if (!cell.inMonth) { grid.append(el('div', { class: 'day is-blank' })); continue; }
-      grid.append(dayCell(cell, byDay[cell.key] || [], tKey));
+      grid.append(dayCell(cell, byDay[cell.key] || [], tKey, ctx.lens));
     }
     root.append(grid);
     attachSwipe(grid, (dir) => shift(dir));
 
-    // --- legend for the types actually used this month --------------------
-    const used = [...new Set(Object.values(byDay).flat().map((w) => w.type))];
-    if (used.length) {
+    // --- legend, keyed to whichever lens is active ------------------------
+    if (ctx.lens === 'workouts') {
+      const used = [...new Set(Object.values(byDay).flat().map((w) => w.type))];
+      if (used.length) {
+        root.append(el('div', { class: 'cal-legend' },
+          ...used.map((k) => {
+            const t = typeInfo(k);
+            return el('span', { class: 'lg' }, el('i', { style: { background: t.color } }), t.label);
+          }),
+        ));
+      }
+    } else {
       root.append(el('div', { class: 'cal-legend' },
-        ...used.map((k) => {
-          const t = typeInfo(k);
-          return el('span', { class: 'lg' }, el('i', { style: { background: t.color } }), t.label);
-        }),
+        ...(lensLegend(ctx.lens) || []).map(({ color, label }) =>
+          el('span', { class: 'lg' }, el('i', { style: { background: color } }), label)),
       ));
     }
 
@@ -74,6 +94,7 @@ export function calendarView(root, ctx) {
       s.km > 0 ? stat(round(kmToDisplay(s.km, settings.units), 1), distanceLabel(settings.units), 'distance') : null,
     ));
 
+    root.append(todayCard(render));
     root.append(streakCard());
     root.append(recentCard());
   }
@@ -92,47 +113,122 @@ export function calendarView(root, ctx) {
   return render;
 }
 
-/** One day: a pastel bubble with a face, and the date underneath. */
-function dayCell(cell, items, tKey) {
+/**
+ * What a day looks like under the current lens.
+ * Colour always runs green-good to warm-less-good; the glyph is whatever
+ * reads fastest for that metric — a face for workouts, an icon for food,
+ * a bare number for counts.
+ */
+function bubbleFor(lens, items, day) {
+  switch (lens) {
+    case 'food': {
+      const d = dietInfo(day?.diet);
+      return d && { fill: d.color, node: el('span', { class: 'glyph e' }, d.icon), title: d.label };
+    }
+    case 'drinks': {
+      if (day?.drinks == null) return null;
+      return {
+        fill: drinksColor(day.drinks),
+        node: el('span', { class: 'glyph n' }, drinksLabel(day.drinks)),
+        title: `${drinksLabel(day.drinks)} drink${day.drinks === 1 ? '' : 's'}`,
+      };
+    }
+    case 'sleep': {
+      if (day?.sleepHours == null) return null;
+      return {
+        fill: sleepColor(day.sleepHours),
+        node: el('span', { class: 'glyph n' }, sleepLabel(day.sleepHours)),
+        title: `${sleepLabel(day.sleepHours)} hours`,
+      };
+    }
+    default: {
+      const face = faceForDay(items);
+      if (!face) return null;
+      const primary = primaryWorkout(items);
+      return {
+        fill: primary ? typeInfo(primary.type).color : 'var(--surface-2)',
+        node: faceEl(face),
+        title: items.map((w) => typeInfo(w.type).label).join(', '),
+      };
+    }
+  }
+}
+
+/** One day: a pastel bubble, and the date underneath. */
+function dayCell(cell, items, tKey, lens) {
   const dayMeta = store.day(cell.key);
-  const face = faceForDay(items);
-  const primary = primaryWorkout(items);
-  const secondary = items.find((w) => w !== primary && w.type !== primary?.type);
+  const shown = bubbleFor(lens, items, dayMeta);
 
   const classes = ['day'];
-  if (!face) classes.push('is-empty');
+  if (!shown) classes.push('is-empty');
   if (cell.key > tKey) classes.push('is-future');
   if (cell.key === tKey) classes.push('is-today');
 
   const bubble = el('div', {
     class: 'bubble',
-    style: primary ? { '--fill': typeInfo(primary.type).color } : null,
-  }, face ? faceEl(face) : null);
+    style: shown ? { '--fill': shown.fill } : null,
+  }, shown ? shown.node : null);
 
-  if (items.length > 1) {
+  // A second activity of the day rides along, but only on the workouts lens —
+  // elsewhere it would mean nothing.
+  if (lens === 'workouts' && items.length > 1) {
+    const primary = primaryWorkout(items);
+    const secondary = items.find((w) => w !== primary && w.type !== primary?.type) || items[1];
     bubble.append(el('span', {
       class: 'extra',
-      style: { '--extra': typeInfo((secondary || items[1]).type).color },
+      style: { '--extra': typeInfo(secondary.type).color },
       title: `${items.length} workouts`,
     }, items.length > 2 ? String(items.length) : ''));
   }
 
-  const label = [
-    formatDay(cell.key, true),
-    items.length ? items.map((w) => typeInfo(w.type).label).join(', ') : 'nothing logged',
-  ].join(' — ');
-
   return el('button', {
     class: classes.join(' '),
-    'aria-label': label,
+    'aria-label': `${formatDay(cell.key, true)} — ${shown ? shown.title : 'nothing logged'}`,
     onclick: () => { haptic(); openDay(cell.key); },
   },
     bubble,
     el('span', { class: 'num' },
       String(cell.day),
-      dayMeta ? el('i', { title: 'Sleep or notes logged' }) : null,
+      // On the workouts lens, flag days carrying a check-in so they don't
+      // read as empty when they aren't.
+      lens === 'workouts' && hasCheckin(dayMeta) ? el('i', { title: 'Checked in' }) : null,
     ),
   );
+}
+
+/** Today's check-in: a prompt when it's missing, a summary once it's there. */
+function todayCard(rerender) {
+  const key = todayKey();
+  const day = store.day(key);
+  const done = hasCheckin(day);
+  const units = store.settings.units;
+
+  const bits = [];
+  if (done) {
+    if (day.weightKg != null) bits.push(`${round(kmToDisplayWeight(day.weightKg, units), 1)} ${units === 'imperial' ? 'lb' : 'kg'}`);
+    if (day.sleepHours != null) bits.push(`${sleepLabel(day.sleepHours)}h sleep`);
+    const d = dietInfo(day.diet);
+    if (d) bits.push(`${d.icon} ${d.label.toLowerCase()}`);
+    if (day.drinks != null) bits.push(`${drinksLabel(day.drinks)} drink${day.drinks === 1 ? '' : 's'}`);
+  }
+
+  return el('button', {
+    class: 'card checkin-card',
+    onclick: () => { haptic(); openCheckin(key, { onDone: rerender }); },
+  },
+    el('span', { class: 'emo', style: { background: done ? '#d9eecf' : '#e8eef8' } }, done ? '✓' : '🌿'),
+    el('span', { class: 'row-main' },
+      el('span', { class: 'row-title' }, done ? 'Checked in today' : 'How was today?'),
+      el('span', { class: 'row-sub' },
+        bits.length ? bits.join(' · ') : 'Weight, food, drinks, sleep'),
+    ),
+    iconEl('chevronRight'),
+  );
+}
+
+/** Local alias so the card doesn't need the whole units module surface. */
+function kmToDisplayWeight(kg, units) {
+  return units === 'imperial' ? kg / 0.45359237 : kg;
 }
 
 function stat(value, unit, label) {

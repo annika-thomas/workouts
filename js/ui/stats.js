@@ -3,8 +3,10 @@ import { store } from '../store.js';
 import { typeInfo } from '../types.js';
 import { todayKey, addDays, fromKey, monthShort, weekStartKey } from '../util/date.js';
 import {
-  formatDuration, formatDistance, formatSleep, kmToDisplay, distanceLabel, round,
+  formatDuration, formatDistance, formatSleep, kmToDisplay, distanceLabel,
+  weightLabel, kgToDisplay, round,
 } from '../util/units.js';
+import { DIET } from '../metrics.js';
 
 const RANGES = [
   { key: '30', label: '30 days', days: 30 },
@@ -47,10 +49,17 @@ export function statsView(root, ctx) {
       s.avgSleep != null ? box(formatSleep(s.avgSleep), '', 'sleep') : null,
     ));
 
-    root.append(weeklyChart());
-    root.append(typeBreakdown(s, units));
-    root.append(consistencyCard(from, to));
-    root.append(sleepCard(from, to));
+    for (const card of [
+      weeklyChart(),
+      typeBreakdown(s, units),
+      consistencyCard(),
+      weightCard(from, to),
+      drinksCard(from, to),
+      foodCard(from, to),
+      sleepCard(from, to),
+    ]) {
+      if (card) root.append(card);
+    }
   }
 
   render();
@@ -142,10 +151,19 @@ function typeBreakdown(summary, units) {
   );
 }
 
-/** A GitHub-style dot grid: one column per week, one row per weekday. */
-function consistencyCard(from, to) {
+const CONSISTENCY_WEEKS = 26;
+
+/**
+ * A GitHub-style dot grid: one column per week, one row per weekday.
+ *
+ * Deliberately fixed to half a year rather than following the range selector —
+ * over 30 days it would be five columns of oversized dots, and the whole point
+ * of this view is the long horizon.
+ */
+function consistencyCard() {
   const ws = store.settings.weekStart;
-  const start = weekStartKey(from, ws);
+  const to = todayKey();
+  const start = weekStartKey(addDays(to, -(CONSISTENCY_WEEKS * 7 - 1)), ws);
   const cols = [];
   let cursor = start;
   let guard = 0;
@@ -159,8 +177,7 @@ function consistencyCard(from, to) {
     cols.push(week);
     cursor = addDays(cursor, 7);
   }
-  // Keep it readable on a phone: at most the last 26 weeks.
-  const shown = cols.slice(-26);
+  const shown = cols.slice(-CONSISTENCY_WEEKS);
 
   const grid = el('div', { class: 'dotgrid' });
   for (const week of shown) {
@@ -178,7 +195,7 @@ function consistencyCard(from, to) {
     el('div', { class: 'card-title' }, 'Consistency'),
     grid,
     el('div', { class: 'tiny muted', style: { marginTop: '8px' } },
-      'One square per day, coloured by activity. Rows are weekdays.'),
+      `The last ${CONSISTENCY_WEEKS} weeks — one dot per day, coloured by activity. Rows are weekdays.`),
   );
 }
 
@@ -187,11 +204,9 @@ function sleepCard(from, to) {
     .filter((d) => d.date >= from && d.date <= to)
     .sort((a, b) => a.date.localeCompare(b.date));
   const sleeps = days.filter((d) => d.sleepHours != null);
-  const weights = days.filter((d) => d.weightKg != null);
   const rhr = days.filter((d) => d.restingHr != null);
-  if (!sleeps.length && !weights.length && !rhr.length) return el('span', {});
+  if (!sleeps.length && !rhr.length) return null;
 
-  const units = store.settings.units;
   const rows = [];
   if (sleeps.length) {
     const avg = sleeps.reduce((a, d) => a + d.sleepHours, 0) / sleeps.length;
@@ -200,14 +215,6 @@ function sleepCard(from, to) {
   if (rhr.length) {
     const avg = rhr.reduce((a, d) => a + d.restingHr, 0) / rhr.length;
     rows.push(['❤️', '#fbe2e4', 'Resting HR', `${Math.round(avg)} bpm average`]);
-  }
-  if (weights.length) {
-    const first = weights[0], last = weights[weights.length - 1];
-    const delta = last.weightKg - first.weightKg;
-    const cur = round(units === 'imperial' ? last.weightKg / 0.45359237 : last.weightKg, 1);
-    const lbl = units === 'imperial' ? 'lb' : 'kg';
-    const d = round(Math.abs(units === 'imperial' ? delta / 0.45359237 : delta), 1);
-    rows.push(['⚖️', '#eae6f8', 'Weight', `${cur} ${lbl}${weights.length > 1 && d > 0 ? ` (${delta > 0 ? '+' : '−'}${d} over range)` : ''}`]);
   }
 
   return el('div', { class: 'card' },
@@ -219,5 +226,143 @@ function sleepCard(from, to) {
         el('div', { class: 'row-sub' }, sub),
       ),
     )),
+  );
+}
+
+/**
+ * A small line chart. Rendered at a nominal 320-wide viewBox and scaled to
+ * the card, so strokes stay even without a layout pass.
+ */
+function lineChart(points, { format = (v) => String(v), color = 'var(--accent)' } = {}) {
+  const W = 320, H = 130, padL = 34, padR = 8, padT = 12, padB = 20;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('class', 'linechart');
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+  const values = points.map((p) => p.value);
+  let min = Math.min(...values);
+  let max = Math.max(...values);
+  if (min === max) { min -= 1; max += 1; }
+  const span = max - min;
+  min -= span * 0.12;
+  max += span * 0.12;
+
+  const x = (i) => padL + (points.length === 1 ? (W - padL - padR) / 2
+    : (i / (points.length - 1)) * (W - padL - padR));
+  const y = (v) => padT + (1 - (v - min) / (max - min)) * (H - padT - padB);
+
+  const add = (tag, attrs, text) => {
+    const n = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+    if (text !== undefined) n.textContent = text;
+    svg.append(n);
+    return n;
+  };
+
+  // Gridlines and value labels at the top and bottom of the plotted band.
+  for (const v of [max - span * 0.12, min + span * 0.12]) {
+    add('line', { class: 'gl', x1: padL, x2: W - padR, y1: y(v), y2: y(v) });
+    add('text', { x: 2, y: y(v) + 3.5 }, format(v));
+  }
+
+  const d = points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(p.value).toFixed(1)}`).join(' ');
+  if (points.length > 1) {
+    add('path', { class: 'ar', d: `${d} L${x(points.length - 1).toFixed(1)} ${H - padB} L${x(0).toFixed(1)} ${H - padB} Z` });
+    add('path', { class: 'ln', d, style: `stroke:${color}` });
+  }
+  // Dots only while they stay legible.
+  if (points.length <= 40) {
+    for (const [i, p] of points.entries()) {
+      add('circle', { class: 'pt', cx: x(i), cy: y(p.value), r: points.length > 20 ? 1.8 : 2.6, style: `fill:${color}` });
+    }
+  }
+
+  add('text', { x: padL, y: H - 5 }, shortDate(points[0].date));
+  if (points.length > 1) {
+    add('text', { x: W - padR, y: H - 5, 'text-anchor': 'end' }, shortDate(points.at(-1).date));
+  }
+  return svg;
+}
+
+function shortDate(key) {
+  const d = fromKey(key);
+  return `${monthShort(d.getMonth())} ${d.getDate()}`;
+}
+
+/** Weight over the selected range, with the change across it. */
+function weightCard(from, to) {
+  const units = store.settings.units;
+  const points = store.daysIn(from, to)
+    .filter((d) => d.weightKg != null)
+    .map((d) => ({ date: d.date, value: kgToDisplay(d.weightKg, units) }));
+  if (!points.length) return null;
+
+  const lbl = weightLabel(units);
+  const first = points[0].value;
+  const last = points.at(-1).value;
+  const delta = last - first;
+  const fmt = (v) => round(v, 1).toFixed(1);
+
+  return el('div', { class: 'card' },
+    el('div', { class: 'card-title' }, 'Weight'),
+    el('div', { class: 'row', style: { paddingTop: '0', borderBottom: 'none' } },
+      el('div', { class: 'row-main' },
+        el('div', { class: 'row-title', style: { fontSize: '22px', fontWeight: '800', letterSpacing: '-.03em' } },
+          `${fmt(last)} ${lbl}`),
+        el('div', { class: 'row-sub' },
+          points.length === 1
+            ? 'One weigh-in in this range'
+            : `${delta === 0 ? 'No change' : `${delta > 0 ? '+' : '−'}${fmt(Math.abs(delta))} ${lbl}`} over ${points.length} weigh-ins`),
+      ),
+    ),
+    points.length > 1 ? lineChart(points, { format: fmt }) : null,
+  );
+}
+
+/** Drinking pattern over the selected range. */
+function drinksCard(from, to) {
+  const days = store.daysIn(from, to).filter((d) => d.drinks != null);
+  if (!days.length) return null;
+
+  const total = days.reduce((sum, d) => sum + d.drinks, 0);
+  const free = days.filter((d) => d.drinks === 0).length;
+  const spanDays = Math.max(1, (fromKey(to) - fromKey(from)) / 86400000 + 1);
+  const perWeek = round((total / spanDays) * 7, 1);
+  const since = store.daysSinceLastDrink();
+
+  return el('div', { class: 'card' },
+    el('div', { class: 'card-title' }, 'Drinks'),
+    el('div', { class: 'stat-row' },
+      box(total, '', 'total'),
+      box(perWeek, '', 'per week'),
+      box(`${free}/${days.length}`, '', 'free days'),
+      since != null ? box(since, '', 'days since') : null,
+    ),
+  );
+}
+
+/** How the eating went, as a distribution across the five steps. */
+function foodCard(from, to) {
+  const days = store.daysIn(from, to).filter((d) => d.diet != null);
+  if (!days.length) return null;
+
+  const counts = DIET.map((d) => ({ ...d, n: days.filter((x) => x.diet === d.value).length }));
+  const max = Math.max(...counts.map((c) => c.n));
+  const avg = days.reduce((sum, d) => sum + d.diet, 0) / days.length;
+
+  return el('div', { class: 'card' },
+    el('div', { class: 'card-title' }, `How you ate · ${days.length} day${days.length === 1 ? '' : 's'} logged`),
+    el('div', { class: 'breakdown' },
+      ...counts.slice().reverse().map((c) => el('div', { class: 'bd' },
+        el('span', { class: 'e', style: { background: c.color } }, c.icon),
+        el('span', { class: 'nm' }, c.label),
+        el('span', { class: 'track' },
+          el('span', { class: 'fill', style: { width: `${max ? (c.n / max) * 100 : 0}%`, background: c.color } })),
+        el('span', { class: 'n' }, String(c.n)),
+      )),
+    ),
+    el('div', { class: 'tiny muted', style: { marginTop: '10px' } },
+      `Averaging ${round(avg, 1)} out of 5.`),
   );
 }

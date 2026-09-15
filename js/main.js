@@ -6,8 +6,7 @@ import { applyTheme, watchSystemTheme } from './theme.js';
 import { calendarView } from './ui/calendar.js';
 import { statsView } from './ui/stats.js';
 import { settingsView } from './ui/settings.js';
-import { openEditor } from './ui/editor.js';
-import { todayKey } from './util/date.js';
+import { openLogChooser } from './ui/chooser.js';
 import * as strava from './integrations/strava.js';
 
 const TABS = [
@@ -57,7 +56,7 @@ function boot() {
     'aria-label': 'Log a workout',
     onclick: () => {
       haptic(10);
-      openEditor({ date: todayKey(), onDone: () => rerenderCurrent?.() });
+      openLogChooser(() => rerenderCurrent?.());
     },
   }, faceEl('happy'), el('span', { class: 'plus' }, iconEl('plus')));
 

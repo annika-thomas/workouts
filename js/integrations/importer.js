@@ -23,6 +23,7 @@ export const FIELDS = [
   { key: 'weight',      label: 'Body weight',     group: 'day' },
   { key: 'bodyFatPct',  label: 'Body fat %',      group: 'day' },
   { key: 'steps',       label: 'Steps',           group: 'day' },
+  { key: 'drinks',      label: 'Drinks',          group: 'day' },
   { key: 'dayNotes',    label: 'Day notes',       group: 'day' },
 ];
 
@@ -41,6 +42,7 @@ const GUESSES = [
   [/^weight|body\s*weight|^mass/i, 'weight'],
   [/body\s*fat|^fat\s*%|^bodyfat/i, 'bodyFatPct'],
   [/^steps|step\s*count/i, 'steps'],
+  [/^drinks?$|alcohol|standard\s*drinks|^units$/i, 'drinks'],
   [/^notes?$|^comment/i, 'workoutNotes'],
 ];
 
@@ -114,6 +116,8 @@ export function buildRecords(records, mapping, opts = {}) {
       if (bf != null) patch.bodyFatPct = bf;
       const steps = num(get(row, 'steps'));
       if (steps != null) patch.steps = steps;
+      const drinks = num(get(row, 'drinks'));
+      if (drinks != null) patch.drinks = drinks;
       const notes = get(row, 'dayNotes');
       if (notes) patch.notes = notes;
       if (Object.keys(patch).length) days[date] = { ...(days[date] || {}), ...patch };

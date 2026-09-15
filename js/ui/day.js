@@ -4,6 +4,7 @@ import { openEditor } from './editor.js';
 import { store } from '../store.js';
 import { typeInfo } from '../types.js';
 import { formatDay, relativeDay } from '../util/date.js';
+import { DIET, DRINK_STEPS } from '../metrics.js';
 import {
   formatDuration, formatDistance, formatEffortRate, weightLabel, kgToDisplay, displayToKg, round,
 } from '../util/units.js';
@@ -54,6 +55,32 @@ export function renderDay(sheet, dayKey) {
     placeholder: 'Sleep, soreness, travel, life — anything worth remembering.',
   }, day.notes || '');
 
+  // Food and drinks: the same one-tap controls as the standalone check-in.
+  const picks = { diet: day.diet ?? null, drinks: day.drinks ?? null };
+
+  const dietRow = el('div', { class: 'pick-row' });
+  function drawDiet() {
+    dietRow.replaceChildren(...DIET.map((d) => el('button', {
+      type: 'button', class: 'pick',
+      'aria-pressed': String(picks.diet === d.value),
+      'aria-label': d.label,
+      style: { '--pick': d.color },
+      onclick: () => { picks.diet = picks.diet === d.value ? null : d.value; haptic(); drawDiet(); save(); },
+    }, el('span', { class: 'e' }, d.icon))));
+  }
+
+  const drinkRow = el('div', { class: 'rating' });
+  function drawDrinks() {
+    drinkRow.replaceChildren(...DRINK_STEPS.map((n) => el('button', {
+      type: 'button',
+      'aria-pressed': String(picks.drinks === n),
+      onclick: () => { picks.drinks = picks.drinks === n ? null : n; haptic(); drawDrinks(); save(); },
+    }, n === 5 ? '5+' : String(n))));
+  }
+
+  drawDiet();
+  drawDrinks();
+
   const ratings = {};
   function ratingField(key, label, lowLabel, highLabel) {
     const row = el('div', { class: 'rating' });
@@ -82,6 +109,8 @@ export function renderDay(sheet, dayKey) {
       sleepQuality: ratings.sleepQuality ?? null,
       energy: ratings.energy ?? null,
       soreness: ratings.soreness ?? null,
+      diet: picks.diet,
+      drinks: picks.drinks,
       notes: notesInput.value.trim() || null,
     });
   }
@@ -112,6 +141,16 @@ export function renderDay(sheet, dayKey) {
         el('div', {}, el('span', { class: 'field-label' }, `Weight (${weightLabel(units)})`), weightInput),
         el('div', {}, el('span', { class: 'field-label' }, 'Steps'), stepsInput),
       ),
+    ),
+    el('div', { class: 'field' },
+      el('span', { class: 'field-label' }, 'How I ate'),
+      dietRow,
+      el('div', { class: 'rating-legend' }, el('span', {}, 'indulgent'), el('span', {}, 'clean')),
+    ),
+    el('div', { class: 'field' },
+      el('span', { class: 'field-label' }, 'Drinks'),
+      drinkRow,
+      el('div', { class: 'rating-legend' }, el('span', {}, 'standard drinks'), el('span', {}, '')),
     ),
     ratingField('sleepQuality', 'Sleep quality', 'wrecked', 'great'),
     ratingField('energy', 'Energy', 'flat', 'buzzing'),
