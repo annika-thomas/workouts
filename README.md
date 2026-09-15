@@ -30,10 +30,14 @@ averages.
 ## Get it on your phone
 
 1. **Settings → Pages** in this repo → Source: **GitHub Actions**.
-   (Or Source: *Deploy from a branch*, branch `main`, folder `/` — either works,
-   the repo root is the site.)
-2. Wait for the deploy, then open `https://<your-username>.github.io/workouts/`.
-3. On iPhone: Share → **Add to Home Screen**. On Android: menu → **Install app**.
+2. Push to the default branch (or run *Deploy to GitHub Pages* manually from the
+   **Actions** tab). The workflow deploys whichever branch is the repo default,
+   so it keeps working if you later rename it to `main`.
+3. Open `https://annika-thomas.github.io/workouts/`.
+4. On iPhone: Share → **Add to Home Screen**. On Android: menu → **Install app**.
+
+*Source: Deploy from a branch* works too — there's no build step, the repo root
+is the site.
 
 It then opens full-screen with its own icon, works offline, and keeps its data
 between launches.

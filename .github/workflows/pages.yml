@@ -1,10 +1,13 @@
 # Publishes the app to GitHub Pages. There is no build step — the repo root
 # is the site — so this just uploads it as-is.
+#
+# It runs on a push to whichever branch is the repository default, so it keeps
+# working whether that is `main` or the branch this started life on.
 name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: ['**']
   workflow_dispatch:
 
 permissions:
@@ -18,6 +21,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.ref_name == github.event.repository.default_branch
     runs-on: ubuntu-latest
     environment:
       name: github-pages
