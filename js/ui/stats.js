@@ -96,8 +96,10 @@ function weeklyChart() {
           style: {
             height: `${Math.max(pct, w.count ? 6 : 2)}%`,
             opacity: isCurrent ? '.65' : '1',
+            // Goal met is solid; short of it stays a softer green.
             background: w.count === 0 ? 'var(--surface-2)'
-              : goal && w.count >= goal ? 'var(--good)' : 'var(--accent)',
+              : !goal || w.count >= goal ? 'var(--accent)'
+                : 'color-mix(in srgb, var(--accent) 40%, var(--surface))',
           },
           title: `${w.count} sessions, week of ${w.start}`,
         }),
@@ -129,7 +131,7 @@ function typeBreakdown(summary, units) {
           ? `${v.count} · ${formatDistance(v.km, units, 0)}`
           : v.minutes > 0 ? `${v.count} · ${formatDuration(v.minutes)}` : `${v.count}`;
         return el('div', { class: 'bd' },
-          el('span', { class: 'e' }, t.icon),
+          el('span', { class: 'e', style: { background: t.color } }, t.icon),
           el('span', { class: 'nm' }, t.label),
           el('span', { class: 'track' },
             el('span', { class: 'fill', style: { width: `${(v.count / max) * 100}%`, background: t.color } })),
@@ -160,27 +162,13 @@ function consistencyCard(from, to) {
   // Keep it readable on a phone: at most the last 26 weeks.
   const shown = cols.slice(-26);
 
-  const grid = el('div', {
-    style: {
-      display: 'grid',
-      gridAutoFlow: 'column',
-      gridTemplateRows: 'repeat(7, 1fr)',
-      gap: '3px',
-      overflowX: 'auto',
-    },
-  });
+  const grid = el('div', { class: 'dotgrid' });
   for (const week of shown) {
     for (const d of week) {
       grid.append(el('span', {
         title: `${d.key}: ${d.n} workout${d.n === 1 ? '' : 's'}`,
         style: {
-          width: '100%',
-          aspectRatio: '1',
-          minWidth: '8px',
-          borderRadius: '3px',
-          background: d.future ? 'transparent'
-            : d.n ? d.color : 'var(--surface-2)',
-          opacity: d.n > 1 ? '1' : d.n ? '.8' : '1',
+          background: d.future ? 'transparent' : d.n ? d.color : 'var(--surface-2)',
         },
       }));
     }
@@ -207,11 +195,11 @@ function sleepCard(from, to) {
   const rows = [];
   if (sleeps.length) {
     const avg = sleeps.reduce((a, d) => a + d.sleepHours, 0) / sleeps.length;
-    rows.push(['🌙', 'Average sleep', `${formatSleep(avg)} over ${sleeps.length} nights`]);
+    rows.push(['🌙', '#e3ecfa', 'Average sleep', `${formatSleep(avg)} over ${sleeps.length} nights`]);
   }
   if (rhr.length) {
     const avg = rhr.reduce((a, d) => a + d.restingHr, 0) / rhr.length;
-    rows.push(['❤️', 'Resting HR', `${Math.round(avg)} bpm average`]);
+    rows.push(['❤️', '#fbe2e4', 'Resting HR', `${Math.round(avg)} bpm average`]);
   }
   if (weights.length) {
     const first = weights[0], last = weights[weights.length - 1];
@@ -219,13 +207,13 @@ function sleepCard(from, to) {
     const cur = round(units === 'imperial' ? last.weightKg / 0.45359237 : last.weightKg, 1);
     const lbl = units === 'imperial' ? 'lb' : 'kg';
     const d = round(Math.abs(units === 'imperial' ? delta / 0.45359237 : delta), 1);
-    rows.push(['⚖️', 'Weight', `${cur} ${lbl}${weights.length > 1 && d > 0 ? ` (${delta > 0 ? '+' : '−'}${d} over range)` : ''}`]);
+    rows.push(['⚖️', '#eae6f8', 'Weight', `${cur} ${lbl}${weights.length > 1 && d > 0 ? ` (${delta > 0 ? '+' : '−'}${d} over range)` : ''}`]);
   }
 
   return el('div', { class: 'card' },
     el('div', { class: 'card-title' }, 'Body & recovery'),
-    ...rows.map(([icon, title, sub]) => el('div', { class: 'row' },
-      el('span', { style: { fontSize: '19px' } }, icon),
+    ...rows.map(([icon, tint, title, sub]) => el('div', { class: 'row' },
+      el('span', { class: 'emo', style: { background: tint } }, icon),
       el('div', { class: 'row-main' },
         el('div', { class: 'row-title' }, title),
         el('div', { class: 'row-sub' }, sub),

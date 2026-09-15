@@ -136,7 +136,7 @@ function workoutRow(w, units, onClick) {
   ].filter(Boolean);
 
   return el('button', { class: 'wo', onclick: onClick },
-    el('div', { class: 'ic', style: { background: `color-mix(in srgb, ${t.color} 20%, transparent)` } }, t.icon),
+    el('div', { class: 'ic', style: { background: t.color } }, t.icon),
     el('div', { class: 'body' },
       el('div', { class: 'name' }, w.title || t.label),
       bits.length ? el('div', { class: 'meta' }, ...bits.map((b) => el('span', {}, b))) : null,

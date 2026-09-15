@@ -1,24 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#1b2230"/>
-      <stop offset="1" stop-color="#0d1016"/>
+    <linearGradient id="cream" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3f5ed"/>
+      <stop offset="1" stop-color="#e4e9dc"/>
     </linearGradient>
-    <linearGradient id="flame" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#ffb02e"/>
-      <stop offset="1" stop-color="#ff6b4a"/>
-    </linearGradient>
+    <clipPath id="grin">
+      <rect x="198" y="322" width="116" height="60"/>
+    </clipPath>
   </defs>
-  <rect width="512" height="512" rx="114" fill="url(#bg)"/>
-  <!-- calendar body -->
-  <rect x="104" y="126" width="304" height="286" rx="40" fill="none" stroke="#3a445a" stroke-width="20"/>
-  <path d="M104 210h304" stroke="#3a445a" stroke-width="20" stroke-linecap="round"/>
-  <path d="M176 100v56M336 100v56" stroke="#3a445a" stroke-width="22" stroke-linecap="round"/>
-  <!-- logged days -->
-  <circle cx="168" cy="268" r="17" fill="#ff6b4a"/>
-  <circle cx="256" cy="268" r="17" fill="#8b7cff"/>
-  <circle cx="168" cy="348" r="17" fill="#5ed6a8"/>
-  <!-- streak flame -->
-  <path d="M334 288c19 19 30 36 30 54 0 30-22 46-48 46s-48-16-48-46c0-22 18-29 29-44 7-10 10-21 8-32 17 5 24 14 29 22z"
-        fill="url(#flame)"/>
+  <rect width="512" height="512" rx="114" fill="url(#cream)"/>
+  <!-- a row of logged days -->
+  <circle cx="176" cy="132" r="23" fill="#f6a58e"/>
+  <circle cx="256" cy="132" r="23" fill="#b9a9ef"/>
+  <circle cx="336" cy="132" r="23" fill="#8fc9ee"/>
+  <!-- the mascot -->
+  <circle cx="256" cy="305" r="136" fill="#b9dd9f"/>
+  <circle cx="211" cy="277" r="19" fill="#2f3a2f"/>
+  <circle cx="301" cy="277" r="19" fill="#2f3a2f"/>
+  <circle cx="256" cy="322" r="58" fill="#2f3a2f" clip-path="url(#grin)"/>
 </svg>

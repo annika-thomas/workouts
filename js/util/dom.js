@@ -6,7 +6,7 @@ export function el(tag, attrs = {}, ...children) {
     if (v === null || v === undefined || v === false) continue;
     if (k === 'class') node.className = v;
     else if (k === 'dataset') Object.assign(node.dataset, v);
-    else if (k === 'style' && typeof v === 'object') Object.assign(node.style, v);
+    else if (k === 'style' && typeof v === 'object') applyStyle(node, v);
     else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v);
     else if (k === 'html') node.innerHTML = v;
     else if (v === true) node.setAttribute(k, '');
@@ -14,6 +14,18 @@ export function el(tag, attrs = {}, ...children) {
   }
   append(node, children);
   return node;
+}
+
+/**
+ * Object.assign skips CSS custom properties (`--fill`), so set those through
+ * setProperty and let the rest go through the normal style object.
+ */
+function applyStyle(node, styles) {
+  for (const [prop, value] of Object.entries(styles)) {
+    if (value === null || value === undefined) continue;
+    if (prop.startsWith('--')) node.style.setProperty(prop, value);
+    else node.style[prop] = value;
+  }
 }
 
 function append(node, children) {

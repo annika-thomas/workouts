@@ -41,7 +41,7 @@ export function openEditor({ date, workout = null, sheet = null, onDone } = {}) 
       'aria-pressed': String(t.key === draft.type),
       style: { '--pick': t.color },
       onclick: () => { draft.type = t.key; haptic(); renderTypes(); syncDistance(); },
-    }, el('span', { class: 'e' }, t.icon), t.label)));
+    }, el('span', { class: 'e' }, t.icon), el('span', {}, t.label))));
   }
 
   const distInput = el('input', {

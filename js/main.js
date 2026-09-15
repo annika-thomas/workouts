@@ -1,5 +1,6 @@
 import { el, clear, toast, haptic } from './util/dom.js';
 import { iconEl } from './ui/icons.js';
+import { faceEl } from './ui/face.js';
 import { store } from './store.js';
 import { applyTheme, watchSystemTheme } from './theme.js';
 import { calendarView } from './ui/calendar.js';
@@ -26,42 +27,51 @@ function boot() {
 
   const app = el('div', { id: 'app' });
   const bar = el('header', { class: 'appbar' },
-    el('h1', {}, 'Workouts'),
+    el('div', { class: 'brand' },
+      el('span', { class: 'bubble' }, faceEl('content')),
+      el('h1', {}, 'Workouts'),
+    ),
     el('div', { class: 'sub' }, todayLabel()),
   );
   const main = el('main', { class: 'view' });
   app.append(bar, main);
 
+  // Two tabs, the log button, then the rest — the notch keeps the button clear.
+  const tabButton = (t) => el('button', {
+    class: 'tab',
+    role: 'tab',
+    'data-tab': t.key,
+    'aria-current': t.key === current ? 'page' : null,
+    onclick: () => { haptic(5); show(t.key); },
+  }, iconEl(t.icon), t.label);
+
   const tabbar = el('nav', { class: 'tabbar', role: 'tablist' },
-    ...TABS.map((t) => el('button', {
-      role: 'tab',
-      'data-tab': t.key,
-      'aria-current': t.key === current ? 'page' : null,
-      onclick: () => { haptic(5); show(t.key); },
-    }, iconEl(t.icon), t.label)),
+    tabButton(TABS[0]),
+    tabButton(TABS[1]),
+    el('span', { class: 'notch', 'aria-hidden': 'true' }),
+    tabButton(TABS[2]),
   );
 
   const fab = el('button', {
-    class: 'fab',
+    class: 'logbtn',
     'aria-label': 'Log a workout',
     onclick: () => {
       haptic(10);
       openEditor({ date: todayKey(), onDone: () => rerenderCurrent?.() });
     },
-  }, iconEl('plus'));
+  }, faceEl('happy'), el('span', { class: 'plus' }, iconEl('plus')));
 
   document.body.append(app, tabbar, fab);
 
   function show(key) {
     current = key;
     const tab = TABS.find((t) => t.key === key) || TABS[0];
-    bar.querySelector('h1').textContent = tab.key === 'calendar' ? 'Workouts' : tab.label;
+    bar.querySelector('.brand h1').textContent = tab.key === 'calendar' ? 'Workouts' : tab.label;
     bar.querySelector('.sub').textContent = tab.key === 'calendar' ? todayLabel() : '';
     for (const b of tabbar.querySelectorAll('button')) {
       if (b.dataset.tab === key) b.setAttribute('aria-current', 'page');
       else b.removeAttribute('aria-current');
     }
-    fab.hidden = key === 'settings';
     clear(main);
     rerenderCurrent = tab.render(main, ctx);
     main.scrollTop = 0;

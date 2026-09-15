@@ -8,9 +8,13 @@ data lives on your device.
 
 ## What it does
 
-**Calendar** — a month grid where every day you trained is tinted and dotted
-with the colour of the activity. Swipe left and right between months. A small
-grey square in a day's corner means you also logged sleep, weight or a note.
+**Calendar** — every day is a face. The colour tells you *what* you did (each
+activity has its own pastel), and the expression tells you *how it went*: a
+contented smile for an easy session, a grin for a good one, a flat mouth for
+something long or maximal, eyes shut for a rest day. Days you haven't logged
+sit as quiet empty circles. A second activity shows up as a small companion
+dot, and a dot beside the date means you logged sleep, weight or a note.
+Swipe left and right between months.
 
 **Logging** — tap a day (or the `+` button) and record type, title, duration,
 distance, elevation, average HR, calories and effort (RPE 1–10), plus free
@@ -150,6 +154,7 @@ js/
   ui/importSheet.js     CSV column mapping and preview
   ui/sheet.js           bottom-sheet component
   ui/icons.js           inline SVG icons
+  ui/face.js            the calendar faces and which one a day gets
   integrations/
     csv.js              CSV parse/serialise
     importer.js         column guessing, unit handling, record building
@@ -161,7 +166,10 @@ js/
 
 Two things to remember:
 
-- Add an activity type in `js/types.js`. The `key` is what gets stored, so
-  renaming an existing one needs a migration in `store.js`.
+- Add an activity type in `js/types.js` — its `color` is the pastel its day
+  circles take. The `key` is what gets stored, so renaming an existing one
+  needs a migration in `store.js`.
+- Colours all come from the tokens at the top of `css/app.css`, defined once
+  for light and again for dark.
 - After editing any file, bump `CACHE` in `sw.js`. Otherwise a phone that has
   already installed the app keeps serving the old version.

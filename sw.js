@@ -2,7 +2,7 @@
  * Offline shell. Bump CACHE when you change any file below, otherwise an
  * installed copy on your phone will keep serving the old one.
  */
-const CACHE = 'workouts-v1';
+const CACHE = 'workouts-v2';
 
 const SHELL = [
   './',
@@ -17,6 +17,7 @@ const SHELL = [
   './js/util/dom.js',
   './js/util/units.js',
   './js/ui/icons.js',
+  './js/ui/face.js',
   './js/ui/sheet.js',
   './js/ui/calendar.js',
   './js/ui/day.js',
