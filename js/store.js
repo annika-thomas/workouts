@@ -2,7 +2,7 @@
 // backup is literally one JSON blob you can email yourself.
 
 import { todayKey, monthKey, addDays, daysBetween, weekStartKey } from './util/date.js';
-import { findExercise, muscleShare, entryVolume } from './exercises.js';
+import { findExercise, muscleShare, entryVolume, bestSet } from './exercises.js';
 
 const STORAGE_KEY = 'workouts.v1';
 const SCHEMA_VERSION = 1;
@@ -227,8 +227,11 @@ class Store extends EventTarget {
         const share = muscleShare(ex, muscle);
         const a = (agg[entry.exerciseId] ||= {
           exerciseId: entry.exerciseId, exercise: ex, sets: 0, weightedSets: 0,
-          volume: 0, sessions: 0, lastDate: null, primary: share === 1,
+          volume: 0, sessions: 0, lastDate: null, primary: share === 1, best: null,
         });
+        // Carry the best set through this pass rather than re-scanning every
+        // workout once per exercise when the list renders.
+        a.best = bestSet([a.best, ...entry.sets].filter(Boolean));
         a.sets += entry.sets.length;
         a.weightedSets += entry.sets.length * share;
         a.volume += entryVolume(entry);
@@ -390,7 +393,7 @@ class Store extends EventTarget {
     if (!data || typeof data !== 'object') throw new Error('Not a valid backup file.');
     const incomingWorkouts = data.workouts || {};
     const incomingDays = data.days || {};
-    if (replace) { this.state.workouts = {}; this.state.days = {}; }
+    if (replace) { this.state.workouts = {}; this.state.days = {}; this.state.exercises = {}; }
 
     let added = 0, updated = 0;
     for (const [id, w] of Object.entries(incomingWorkouts)) {
@@ -398,8 +401,10 @@ class Store extends EventTarget {
       if (!mine) { this.state.workouts[id] = w; added++; }
       else if ((w.updatedAt || '') > (mine.updatedAt || '')) { this.state.workouts[id] = w; updated++; }
     }
+    // Take the incoming definition: a rename in the backup should win, and on a
+    // replace-restore there is nothing here to preserve anyway.
     for (const [id, ex] of Object.entries(data.exercises || {})) {
-      this.state.exercises[id] ||= ex;
+      this.state.exercises[id] = ex;
     }
     let dayCount = 0;
     for (const [key, d] of Object.entries(incomingDays)) {

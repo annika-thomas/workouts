@@ -65,7 +65,6 @@ export function musclesView(root, ctx) {
     // --- headline numbers -------------------------------------------------
     const totalSets = series.reduce((n, d) => n + d.sets, 0);
     const totalVolume = series.reduce((n, d) => n + d.volume, 0);
-    const allBest = bestOverall(ctx.muscle, from, to);
 
     root.append(el('div', { class: 'stat-row', style: { marginTop: '14px' } },
       stat(Math.round(totalSets), '', 'sets'),
@@ -77,7 +76,9 @@ export function musclesView(root, ctx) {
     ));
 
     // --- sets per week ----------------------------------------------------
-    root.append(weeklyCard(series, muscle));
+    // Always a real 12 weeks, not the selected range padded with false zeros.
+    const chartFrom = weekStartKey(addDays(to, -(12 * 7 - 1)), store.settings.weekStart);
+    root.append(weeklyCard(store.muscleSeries(ctx.muscle, chartFrom, to), muscle));
 
     // --- volume over time -------------------------------------------------
     const volPoints = series.filter((d) => d.volume > 0)
@@ -93,7 +94,7 @@ export function musclesView(root, ctx) {
     const card = el('div', { class: 'card' },
       el('div', { class: 'card-title' }, `Exercises · ${exercises.length}`));
     for (const a of exercises) {
-      const best = bestAcross(a.exerciseId, from, to);
+      const best = a.best;
       card.append(el('button', {
         class: 'ex-row',
         onclick: () => { haptic(); openExerciseDetail(a.exerciseId); },
@@ -114,11 +115,9 @@ export function musclesView(root, ctx) {
     }
     root.append(card);
 
-    if (allBest) {
-      root.append(el('p', { class: 'tiny muted', style: { textAlign: 'center' } },
-        'Sets and load are share-weighted: an exercise counts fully toward its '
-        + 'main muscle and half toward the others.'));
-    }
+    root.append(el('p', { class: 'tiny muted', style: { textAlign: 'center' } },
+      'Sets and load are share-weighted: an exercise counts fully toward its '
+      + 'main muscle and half toward the others.'));
   }
 
   render();
@@ -184,17 +183,6 @@ function weeklyCard(series, muscle) {
     el('div', { class: 'tiny muted', style: { marginTop: '6px' } },
       'Last 12 weeks. The final bar is the week in progress.'),
   );
-}
-
-function bestAcross(exerciseId, from, to) {
-  const sets = store.historyFor(exerciseId)
-    .filter((h) => h.date >= from && h.date <= to)
-    .flatMap((h) => h.entry.sets);
-  return bestSet(sets);
-}
-
-function bestOverall(muscle, from, to) {
-  return store.muscleExercises(muscle, from, to).length > 0;
 }
 
 /** One exercise's progression: top set over time, plus every session. */

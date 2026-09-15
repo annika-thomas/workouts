@@ -209,7 +209,7 @@ export function bestSet(sets = []) {
 }
 
 export function formatSet(set, unit, units) {
-  if (!set) return '';
+  if (!set || !set.reps) return '';
   const rep = unit === 'time' ? `${set.reps}s` : `${set.reps}`;
   if (!set.weightKg) return rep;
   const w = units === 'imperial' ? set.weightKg / 0.45359237 : set.weightKg;
@@ -219,15 +219,18 @@ export function formatSet(set, unit, units) {
 
 /** "3 × 8 @ 60 kg" when the sets match, otherwise "4 sets · 1,240 kg". */
 export function summariseEntry(entry, exercise, units) {
-  const sets = entry.sets || [];
+  // A row you haven't typed reps into yet isn't a set — otherwise a freshly
+  // added exercise reads "1 × null".
+  const sets = (entry.sets || []).filter((s) => s && s.reps);
   if (!sets.length) return 'No sets yet';
   const unit = exercise?.unit || 'reps';
   const same = sets.every((s) => s.reps === sets[0].reps && (s.weightKg || 0) === (sets[0].weightKg || 0));
   if (same) {
     return `${sets.length} × ${formatSet(sets[0], unit, units)}`;
   }
-  const vol = entryVolume(entry);
-  return vol
-    ? `${sets.length} sets · ${Math.round(vol).toLocaleString()} ${units === 'imperial' ? 'lb' : 'kg'}`
-    : `${sets.length} sets`;
+  const vol = entryVolume({ sets });
+  if (!vol) return `${sets.length} sets`;
+  // Volume is stored in kg, so imperial needs converting like everywhere else.
+  const shown = units === 'imperial' ? vol / 0.45359237 : vol;
+  return `${sets.length} sets · ${Math.round(shown).toLocaleString()} ${units === 'imperial' ? 'lb' : 'kg'}`;
 }

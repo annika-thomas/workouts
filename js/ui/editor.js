@@ -155,7 +155,9 @@ export function openEditor({ date, workout = null, sheet = null, onDone } = {}) 
       avgHr: hrInput.value,
       calories: calInput.value,
       notes: notesInput.value,
-      exercises: lift.read(),
+      // Mirrors distance/elevation: a type that hides the section doesn't keep
+      // its data, otherwise hidden exercises go on counting toward muscle totals.
+      exercises: LIFT_TYPES.has(draft.type) ? lift.read() : [],
       source: draft.source,
       externalId: draft.externalId,
     };
