@@ -1,0 +1,197 @@
+import { el, toast, haptic, confirmDialog } from '../util/dom.js';
+import { openSheet } from './sheet.js';
+import { store } from '../store.js';
+import { TYPES, typeInfo } from '../types.js';
+import { formatDay, relativeDay } from '../util/date.js';
+import {
+  distanceLabel, elevLabel, kmToDisplay, displayToKm, mToElev, elevToM, round,
+} from '../util/units.js';
+
+/**
+ * Add or edit one workout. `sheet` lets a caller reuse an already-open sheet
+ * (the day view does this) instead of stacking a second scrim.
+ */
+export function openEditor({ date, workout = null, sheet = null, onDone } = {}) {
+  const units = store.settings.units;
+  const draft = {
+    id: workout?.id || null,
+    date: workout?.date || date,
+    time: workout?.time || '',
+    type: workout?.type || 'run',
+    title: workout?.title || '',
+    durationMin: workout?.durationMin ?? '',
+    distanceKm: workout?.distanceKm ?? null,
+    elevationM: workout?.elevationM ?? null,
+    rpe: workout?.rpe ?? null,
+    avgHr: workout?.avgHr ?? '',
+    calories: workout?.calories ?? '',
+    notes: workout?.notes || '',
+    source: workout?.source || 'manual',
+    externalId: workout?.externalId || null,
+  };
+
+  // --- type picker -------------------------------------------------------
+  const typeGrid = el('div', { class: 'type-grid' });
+  const distanceField = el('div', { class: 'field' });
+
+  function renderTypes() {
+    typeGrid.replaceChildren(...TYPES.map((t) => el('button', {
+      type: 'button',
+      class: 'type-opt',
+      'aria-pressed': String(t.key === draft.type),
+      style: { '--pick': t.color },
+      onclick: () => { draft.type = t.key; haptic(); renderTypes(); syncDistance(); },
+    }, el('span', { class: 'e' }, t.icon), t.label)));
+  }
+
+  const distInput = el('input', {
+    type: 'number', inputmode: 'decimal', step: '0.01', min: '0', placeholder: '0.0',
+    value: draft.distanceKm != null ? String(round(kmToDisplay(draft.distanceKm, units), 2)) : '',
+  });
+  const elevInput = el('input', {
+    type: 'number', inputmode: 'numeric', step: '1', min: '0', placeholder: '0',
+    value: draft.elevationM != null ? String(Math.round(mToElev(draft.elevationM, units))) : '',
+  });
+
+  function syncDistance() {
+    // Distance only makes sense for some types; keep the form short otherwise.
+    distanceField.hidden = !typeInfo(draft.type).distance;
+  }
+
+  distanceField.append(
+    el('div', { class: 'grid-2' },
+      el('div', {},
+        el('span', { class: 'field-label' }, `Distance`),
+        el('div', { class: 'input-suffix' }, distInput, el('span', {}, distanceLabel(units))),
+      ),
+      el('div', {},
+        el('span', { class: 'field-label' }, 'Elevation'),
+        el('div', { class: 'input-suffix' }, elevInput, el('span', {}, elevLabel(units))),
+      ),
+    ),
+  );
+
+  // --- other inputs ------------------------------------------------------
+  const titleInput = el('input', { type: 'text', placeholder: 'e.g. Easy loop by the river', value: draft.title, maxlength: '120' });
+  const dateInput = el('input', { type: 'date', value: draft.date });
+  const timeInput = el('input', { type: 'time', value: draft.time });
+  const durInput = el('input', { type: 'number', inputmode: 'numeric', step: '1', min: '0', placeholder: '45', value: draft.durationMin });
+  const hrInput = el('input', { type: 'number', inputmode: 'numeric', step: '1', min: '0', placeholder: '—', value: draft.avgHr });
+  const calInput = el('input', { type: 'number', inputmode: 'numeric', step: '1', min: '0', placeholder: '—', value: draft.calories });
+  const notesInput = el('textarea', { placeholder: 'How did it feel? What did you do?' }, draft.notes);
+
+  const rpeRow = el('div', { class: 'rating' });
+  function renderRpe() {
+    rpeRow.replaceChildren(...Array.from({ length: 10 }, (_, i) => i + 1).map((n) => el('button', {
+      type: 'button',
+      'aria-pressed': String(draft.rpe === n),
+      onclick: () => { draft.rpe = draft.rpe === n ? null : n; haptic(); renderRpe(); },
+    }, String(n))));
+  }
+
+  renderTypes();
+  renderRpe();
+  syncDistance();
+
+  const form = el('div', {},
+    el('div', { class: 'field' }, el('span', { class: 'field-label' }, 'Activity'), typeGrid),
+    el('div', { class: 'field' },
+      el('div', { class: 'grid-2' },
+        el('div', {}, el('span', { class: 'field-label' }, 'Date'), dateInput),
+        el('div', {}, el('span', { class: 'field-label' }, 'Time'), timeInput),
+      ),
+    ),
+    el('div', { class: 'field' }, el('label', {}, 'Title'), titleInput),
+    el('div', { class: 'field' },
+      el('div', { class: 'grid-3' },
+        el('div', {}, el('span', { class: 'field-label' }, 'Minutes'), durInput),
+        el('div', {}, el('span', { class: 'field-label' }, 'Avg HR'), hrInput),
+        el('div', {}, el('span', { class: 'field-label' }, 'Calories'), calInput),
+      ),
+    ),
+    distanceField,
+    el('div', { class: 'field' },
+      el('span', { class: 'field-label' }, 'Effort (RPE)'),
+      rpeRow,
+      el('div', { class: 'rating-legend' }, el('span', {}, 'easy'), el('span', {}, 'all out')),
+    ),
+    el('div', { class: 'field' }, el('label', {}, 'Notes'), notesInput),
+    draft.source !== 'manual'
+      ? el('p', { class: 'tiny muted' }, `Imported from ${draft.source}. Edits stay local and won't be pushed back.`)
+      : null,
+  );
+
+  function collect() {
+    return {
+      id: draft.id,
+      date: dateInput.value || draft.date,
+      time: timeInput.value || null,
+      type: draft.type,
+      title: titleInput.value,
+      durationMin: durInput.value,
+      distanceKm: typeInfo(draft.type).distance ? displayToKm(distInput.value, units) : null,
+      elevationM: typeInfo(draft.type).distance ? elevToM(elevInput.value, units) : null,
+      rpe: draft.rpe,
+      avgHr: hrInput.value,
+      calories: calInput.value,
+      notes: notesInput.value,
+      source: draft.source,
+      externalId: draft.externalId,
+    };
+  }
+
+  // When the editor opened its own sheet, it also owns closing it. When a
+  // caller passed one in (the day view), that caller re-renders it instead.
+  let ownSheet = null;
+  const finish = (record) => {
+    ownSheet?.close();
+    onDone?.(record);
+  };
+
+  const saveBtn = el('button', {
+    class: 'btn btn-primary',
+    onclick: () => {
+      const record = collect();
+      if (!record.date) { toast('Pick a date first', 'error'); return; }
+      store.saveWorkout(record);
+      haptic(12);
+      toast(draft.id ? 'Workout updated' : 'Workout logged', 'success');
+      finish(record);
+    },
+  }, draft.id ? 'Save changes' : 'Log workout');
+
+  const footer = [
+    draft.id
+      ? el('button', {
+        class: 'btn btn-ghost',
+        style: { flex: '0 0 auto' },
+        'aria-label': 'Delete workout',
+        onclick: async () => {
+          const ok = await confirmDialog({
+            title: 'Delete this workout?',
+            body: 'It will be removed from your calendar and totals.',
+            confirmText: 'Delete',
+            danger: true,
+          });
+          if (!ok) return;
+          store.deleteWorkout(draft.id);
+          toast('Deleted');
+          finish(null);
+        },
+      }, '🗑')
+      : null,
+    saveBtn,
+  ];
+
+  const heading = draft.id ? 'Edit workout' : 'Log a workout';
+  const sub = relativeDay(draft.date) || formatDay(draft.date, true);
+
+  if (sheet) {
+    sheet.setTitle(heading, sub);
+    sheet.setBody(form);
+    sheet.setFooter(footer);
+    return sheet;
+  }
+  ownSheet = openSheet({ title: heading, subtitle: sub, body: form, footer });
+  return ownSheet;
+}

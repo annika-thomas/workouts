@@ -1,0 +1,154 @@
+import { el, haptic } from '../util/dom.js';
+import { openSheet } from './sheet.js';
+import { openEditor } from './editor.js';
+import { store } from '../store.js';
+import { typeInfo } from '../types.js';
+import { formatDay, relativeDay } from '../util/date.js';
+import {
+  formatDuration, formatDistance, formatEffortRate, weightLabel, kgToDisplay, displayToKg, round,
+} from '../util/units.js';
+
+/** Bottom sheet for one calendar day: its workouts plus how the body felt. */
+export function openDay(dayKey) {
+  const sheet = openSheet({ title: '', subtitle: '' });
+  renderDay(sheet, dayKey);
+  return sheet;
+}
+
+export function renderDay(sheet, dayKey) {
+  const units = store.settings.units;
+  const workouts = store.workoutsOn(dayKey);
+  const day = store.day(dayKey) || {};
+
+  const rel = relativeDay(dayKey);
+  sheet.setTitle(rel || formatDay(dayKey, true), rel ? formatDay(dayKey, true) : '');
+
+  // --- workout list ------------------------------------------------------
+  const list = el('div', {});
+  if (workouts.length) {
+    for (const w of workouts) list.append(workoutRow(w, units, () => {
+      openEditor({ workout: w, sheet, onDone: () => renderDay(sheet, dayKey) });
+    }));
+  } else {
+    list.append(el('div', { class: 'empty' }, 'Nothing logged yet for this day.'));
+  }
+
+  // --- daily metrics -----------------------------------------------------
+  const sleepInput = el('input', {
+    type: 'number', inputmode: 'decimal', step: '0.25', min: '0', max: '24',
+    placeholder: '7.5', value: day.sleepHours ?? '',
+  });
+  const rhrInput = el('input', {
+    type: 'number', inputmode: 'numeric', step: '1', min: '20', max: '200',
+    placeholder: '—', value: day.restingHr ?? '',
+  });
+  const weightInput = el('input', {
+    type: 'number', inputmode: 'decimal', step: '0.1', min: '0',
+    placeholder: '—', value: day.weightKg != null ? String(round(kgToDisplay(day.weightKg, units), 1)) : '',
+  });
+  const stepsInput = el('input', {
+    type: 'number', inputmode: 'numeric', step: '1', min: '0',
+    placeholder: '—', value: day.steps ?? '',
+  });
+  const notesInput = el('textarea', {
+    placeholder: 'Sleep, soreness, travel, life — anything worth remembering.',
+  }, day.notes || '');
+
+  const ratings = {};
+  function ratingField(key, label, lowLabel, highLabel) {
+    const row = el('div', { class: 'rating' });
+    const draw = () => {
+      row.replaceChildren(...[1, 2, 3, 4, 5].map((n) => el('button', {
+        type: 'button',
+        'aria-pressed': String(ratings[key] === n),
+        onclick: () => { ratings[key] = ratings[key] === n ? null : n; haptic(); draw(); save(); },
+      }, String(n))));
+    };
+    ratings[key] = day[key] ?? null;
+    draw();
+    return el('div', { class: 'field' },
+      el('span', { class: 'field-label' }, label),
+      row,
+      el('div', { class: 'rating-legend' }, el('span', {}, lowLabel), el('span', {}, highLabel)),
+    );
+  }
+
+  function save() {
+    store.saveDay(dayKey, {
+      sleepHours: numOrNull(sleepInput.value),
+      restingHr: numOrNull(rhrInput.value),
+      weightKg: displayToKg(weightInput.value, units),
+      steps: numOrNull(stepsInput.value),
+      sleepQuality: ratings.sleepQuality ?? null,
+      energy: ratings.energy ?? null,
+      soreness: ratings.soreness ?? null,
+      notes: notesInput.value.trim() || null,
+    });
+  }
+
+  for (const input of [sleepInput, rhrInput, weightInput, stepsInput, notesInput]) {
+    input.addEventListener('change', save);
+    input.addEventListener('blur', save);
+  }
+
+  const body = el('div', {},
+    el('div', { class: 'card-title' }, `Workouts${workouts.length ? ` · ${workouts.length}` : ''}`),
+    list,
+    el('button', {
+      class: 'btn btn-ghost btn-block btn-sm',
+      style: { marginTop: '4px' },
+      onclick: () => openEditor({ date: dayKey, sheet, onDone: () => renderDay(sheet, dayKey) }),
+    }, '+ Add a workout'),
+
+    el('div', { class: 'card-title', style: { marginTop: '22px' } }, 'How the day felt'),
+    el('div', { class: 'field' },
+      el('div', { class: 'grid-2' },
+        el('div', {}, el('span', { class: 'field-label' }, 'Sleep (hours)'), sleepInput),
+        el('div', {}, el('span', { class: 'field-label' }, 'Resting HR'), rhrInput),
+      ),
+    ),
+    el('div', { class: 'field' },
+      el('div', { class: 'grid-2' },
+        el('div', {}, el('span', { class: 'field-label' }, `Weight (${weightLabel(units)})`), weightInput),
+        el('div', {}, el('span', { class: 'field-label' }, 'Steps'), stepsInput),
+      ),
+    ),
+    ratingField('sleepQuality', 'Sleep quality', 'wrecked', 'great'),
+    ratingField('energy', 'Energy', 'flat', 'buzzing'),
+    ratingField('soreness', 'Soreness', 'fresh', 'wrecked'),
+    el('div', { class: 'field' }, el('label', {}, 'Notes'), notesInput),
+  );
+
+  sheet.setBody(body);
+  sheet.setFooter([
+    el('button', { class: 'btn btn-primary', onclick: () => { save(); sheet.close(); } }, 'Done'),
+  ]);
+}
+
+function workoutRow(w, units, onClick) {
+  const t = typeInfo(w.type);
+  const bits = [
+    w.time || null,
+    w.durationMin ? formatDuration(w.durationMin) : null,
+    w.distanceKm ? formatDistance(w.distanceKm, units) : null,
+    formatEffortRate(w, t.pace, units) || null,
+    w.rpe ? `RPE ${w.rpe}` : null,
+  ].filter(Boolean);
+
+  return el('button', { class: 'wo', onclick: onClick },
+    el('div', { class: 'ic', style: { background: `color-mix(in srgb, ${t.color} 20%, transparent)` } }, t.icon),
+    el('div', { class: 'body' },
+      el('div', { class: 'name' }, w.title || t.label),
+      bits.length ? el('div', { class: 'meta' }, ...bits.map((b) => el('span', {}, b))) : null,
+      w.notes ? el('div', { class: 'meta' }, el('span', {}, truncate(w.notes, 70))) : null,
+    ),
+    w.source && w.source !== 'manual' ? el('span', { class: 'src' }, w.source) : null,
+  );
+}
+
+function truncate(s, n) { return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+function numOrNull(v) {
+  if (v === '' || v == null) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b2230"/>
+      <stop offset="1" stop-color="#0d1016"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffb02e"/>
+      <stop offset="1" stop-color="#ff6b4a"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="114" fill="url(#bg)"/>
+  <!-- calendar body -->
+  <rect x="104" y="126" width="304" height="286" rx="40" fill="none" stroke="#3a445a" stroke-width="20"/>
+  <path d="M104 210h304" stroke="#3a445a" stroke-width="20" stroke-linecap="round"/>
+  <path d="M176 100v56M336 100v56" stroke="#3a445a" stroke-width="22" stroke-linecap="round"/>
+  <!-- logged days -->
+  <circle cx="168" cy="268" r="17" fill="#ff6b4a"/>
+  <circle cx="256" cy="268" r="17" fill="#8b7cff"/>
+  <circle cx="168" cy="348" r="17" fill="#5ed6a8"/>
+  <!-- streak flame -->
+  <path d="M334 288c19 19 30 36 30 54 0 30-22 46-48 46s-48-16-48-46c0-22 18-29 29-44 7-10 10-21 8-32 17 5 24 14 29 22z"
+        fill="url(#flame)"/>
+</svg>
