@@ -8,17 +8,17 @@
  */
 
 export const MUSCLES = [
-  { key: 'chest',      label: 'Chest',      color: '#be7043' },
-  { key: 'back',       label: 'Back',       color: '#5f8296' },
+  { key: 'chest',      label: 'Chest',      color: '#c6835b' },
+  { key: 'back',       label: 'Back',       color: '#7897a9' },
   { key: 'shoulders',  label: 'Shoulders',  color: '#d4a368' },
-  { key: 'traps',      label: 'Traps',      color: '#7f91a9' },
-  { key: 'biceps',     label: 'Biceps',     color: '#7e7093' },
-  { key: 'triceps',    label: 'Triceps',    color: '#6e9478' },
+  { key: 'traps',      label: 'Traps',      color: '#8394ac' },
+  { key: 'biceps',     label: 'Biceps',     color: '#998ea9' },
+  { key: 'triceps',    label: 'Triceps',    color: '#789b81' },
   { key: 'forearms',   label: 'Forearms',   color: '#a3b076' },
   { key: 'core',       label: 'Core',       color: '#c0a455' },
-  { key: 'glutes',     label: 'Glutes',     color: '#ae6b75' },
-  { key: 'quads',      label: 'Quads',      color: '#5f9089' },
-  { key: 'hamstrings', label: 'Hamstrings', color: '#7d8f4e' },
+  { key: 'glutes',     label: 'Glutes',     color: '#bb848c' },
+  { key: 'quads',      label: 'Quads',      color: '#699c95' },
+  { key: 'hamstrings', label: 'Hamstrings', color: '#879b54' },
   { key: 'calves',     label: 'Calves',     color: '#b5ac93' },
 ];
 

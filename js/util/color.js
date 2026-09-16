@@ -41,26 +41,10 @@ export function inkFor(hex) {
 }
 
 /**
- * Two colours in the ramp sit too close to the dark theme's ground to read:
- * the deep forest green at the good end and the rust at the bad end. Rather
- * than maintain a whole second palette, lift just those on dark — the hue
- * order, and so the meaning, is unchanged.
+ * The palette is deliberately light enough that dark ink reads on every fill,
+ * against both the cream and the dark ground — so nothing needs swapping per
+ * theme. inkFor stays as the guardrail for any colour added later.
  */
-const DARK_SWAP = {
-  '#3f5637': '#5f8043',   // deep forest green
-  '#6c8b52': '#7b9a5f',   // one drink
-  '#a85c2f': '#b86a3c',   // rust
-};
-
-export function isDarkTheme() {
-  const attr = document.documentElement.getAttribute('data-theme');
-  if (attr === 'dark') return true;
-  if (attr === 'light') return false;
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
-}
-
-/** A fill and the ink that reads on it, both resolved for the current theme. */
 export function resolveFill(hex) {
-  const fill = (isDarkTheme() && DARK_SWAP[String(hex).toLowerCase()]) || hex;
-  return { fill, ink: inkFor(fill) };
+  return { fill: hex, ink: inkFor(hex) };
 }

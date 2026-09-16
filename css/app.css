@@ -1199,4 +1199,4 @@ select {
 .score-card .bd .n { font-weight: 600; color: var(--text-2); text-align: right; }
 
 /* A day scored from only one of the three components. */
-.day.is-partial .bubble { opacity: .45; }
+.day.is-partial .bubble { opacity: .55; }
