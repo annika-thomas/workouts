@@ -2,7 +2,7 @@
  * Offline shell. Bump CACHE when you change any file below, otherwise an
  * installed copy on your phone will keep serving the old one.
  */
-const CACHE = 'workouts-v9';
+const CACHE = 'workouts-v10';
 
 const SHELL = [
   './',

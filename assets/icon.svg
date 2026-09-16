@@ -1,21 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
-    <linearGradient id="cream" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#f3f5ed"/>
-      <stop offset="1" stop-color="#e4e9dc"/>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#39492a"/>
+      <stop offset="1" stop-color="#2b3720"/>
     </linearGradient>
-    <clipPath id="grin">
-      <rect x="198" y="322" width="116" height="60"/>
-    </clipPath>
   </defs>
-  <rect width="512" height="512" rx="114" fill="url(#cream)"/>
-  <!-- a row of logged days -->
-  <circle cx="176" cy="132" r="23" fill="#f6a58e"/>
-  <circle cx="256" cy="132" r="23" fill="#b9a9ef"/>
-  <circle cx="336" cy="132" r="23" fill="#8fc9ee"/>
-  <!-- the mascot -->
-  <circle cx="256" cy="305" r="136" fill="#b9dd9f"/>
-  <circle cx="211" cy="277" r="19" fill="#2f3a2f"/>
-  <circle cx="301" cy="277" r="19" fill="#2f3a2f"/>
-  <circle cx="256" cy="322" r="58" fill="#2f3a2f" clip-path="url(#grin)"/>
+  <!-- Full bleed: the platform applies its own corner mask. -->
+  <rect width="1024" height="1024" fill="url(#g)"/>
+  <circle cx="512" cy="512" r="272" fill="#f1eee1"/>
+  <circle cx="412" cy="448" r="29" fill="#39492a"/>
+  <circle cx="612" cy="448" r="29" fill="#39492a"/>
+  <path d="M390.8 540a140 140 0 0 0 242.4 0" fill="none" stroke="#39492a"
+        stroke-width="40" stroke-linecap="round"/>
 </svg>
