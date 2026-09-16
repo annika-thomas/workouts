@@ -15,27 +15,28 @@
 :root {
   color-scheme: light;
 
-  --bg:        #eff1e9;
-  --bg-2:      #f6f8f1;
-  --surface:   #ffffff;
-  --surface-2: #f1f3ec;
-  --line:      #e4e7dc;
-  --line-soft: #ecefe5;
+  /* Warm cream ground, olive ink. Nothing here is pure white or pure black. */
+  --bg:        #f1eee1;
+  --bg-2:      #f7f4ea;
+  --surface:   #fcfaf1;
+  --surface-2: #e9e5d5;
+  --line:      #ddd8c5;
+  --line-soft: #e7e3d2;
 
-  --text:      #333a31;
-  --text-2:    #7d8678;
-  --text-3:    #a6ad9e;
+  --text:      #2b351c;
+  --text-2:    #6b715a;
+  --text-3:    #9b9c8a;
 
-  --accent:      #5aa862;
-  --accent-soft: #e3efe1;
-  --on-accent:   #ffffff;
-  --good:        #5aa862;
-  --danger:      #e07a70;
-  --danger-soft: #fbe8e5;
+  --accent:      #626b3e;
+  --accent-soft: #e4e5d3;
+  --on-accent:   #fcfaf1;
+  --good:        #626b3e;
+  --danger:      #a85c2f;
+  --danger-soft: #f1e3d6;
 
-  /* Faces stay charcoal in both themes — they sit on pastel, never on the page. */
-  --face: #2f3a2f;
-  --mascot: #b9dd9f;
+  /* Default face ink. Individual bubbles override it per fill via --ink. */
+  --face: #242c1a;
+  --mascot: #a5b18d;
 
   --radius:    22px;
   --radius-sm: 15px;
@@ -54,22 +55,22 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg:        #1b201b;
-  --bg-2:      #222822;
-  --surface:   #2a312a;
-  --surface-2: #333b32;
-  --line:      #3c453b;
-  --line-soft: #343d33;
-  --text:      #edf0e8;
-  --text-2:    #a4ad9f;
-  --text-3:    #79816f;
-  --accent:      #7cc784;
-  --accent-soft: #2f3a2e;
-  --on-accent:   #16210f;
-  --good:        #7cc784;
-  --danger:      #e98d83;
-  --danger-soft: #3a2b29;
-  --mascot: #a9d091;
+  --bg:        #1b1f16;
+  --bg-2:      #22261a;
+  --surface:   #292e1f;
+  --surface-2: #343a26;
+  --line:      #3d4430;
+  --line-soft: #343a28;
+  --text:      #edebdb;
+  --text-2:    #a2a58f;
+  --text-3:    #767963;
+  --accent:      #a5b18d;
+  --accent-soft: #2f3722;
+  --on-accent:   #1b1f16;
+  --good:        #a5b18d;
+  --danger:      #c98455;
+  --danger-soft: #38291d;
+  --mascot: #8c9c70;
   --shadow:    0 2px 14px rgba(0, 0, 0, .3);
   --shadow-lg: 0 10px 34px rgba(0, 0, 0, .45);
 }
@@ -77,21 +78,21 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --bg:        #1b201b;
-    --bg-2:      #222822;
-    --surface:   #2a312a;
-    --surface-2: #333b32;
-    --line:      #3c453b;
-    --line-soft: #343d33;
-    --text:      #edf0e8;
-    --text-2:    #a4ad9f;
-    --text-3:    #79816f;
-    --accent:      #7cc784;
-    --accent-soft: #2f3a2e;
-    --on-accent:   #16210f;
-    --good:        #7cc784;
-    --danger:      #e98d83;
-    --danger-soft: #3a2b29;
+    --bg:        #1b1f16;
+    --bg-2:      #22261a;
+    --surface:   #292e1f;
+    --surface-2: #343a26;
+    --line:      #3d4430;
+    --line-soft: #343a28;
+    --text:      #edebdb;
+    --text-2:    #a2a58f;
+    --text-3:    #767963;
+    --accent:      #a5b18d;
+    --accent-soft: #2f3722;
+    --on-accent:   #1b1f16;
+    --good:        #a5b18d;
+    --danger:      #c98455;
+    --danger-soft: #38291d;
     --shadow:    0 2px 14px rgba(0, 0, 0, .3);
     --shadow-lg: 0 10px 34px rgba(0, 0, 0, .45);
   }
@@ -387,7 +388,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -0.015em; }
   aspect-ratio: 1;
   border-radius: 50%;
   background: var(--fill, var(--surface-2));
-  color: var(--face);
+  color: var(--ink, var(--face));
   display: grid;
   place-items: center;
 }
@@ -395,9 +396,9 @@ h1, h2, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -0.015em; }
 
 /* Nothing logged: a soft empty ring rather than a filled face. */
 .day.is-empty .bubble {
-  background: color-mix(in srgb, var(--line) 34%, transparent);
+  background: color-mix(in srgb, var(--line) 48%, transparent);
 }
-.day.is-future .bubble { background: color-mix(in srgb, var(--line) 18%, transparent); }
+.day.is-future .bubble { background: color-mix(in srgb, var(--line) 24%, transparent); }
 
 .day.is-today .bubble {
   box-shadow: 0 0 0 2.5px var(--bg), 0 0 0 5px var(--accent);
@@ -1049,7 +1050,7 @@ select {
 .chip:active { transform: scale(.94); }
 .chip[aria-pressed='true'] {
   background: var(--pick, var(--accent));
-  color: var(--face);
+  color: var(--ink, var(--face));
   font-weight: 750;
 }
 .chip-n {
@@ -1189,7 +1190,7 @@ select {
   width: 46px; height: 46px;
   flex: none;
   border-radius: 50%;
-  color: var(--face);
+  color: var(--ink, var(--face));
   display: grid;
   place-items: center;
 }

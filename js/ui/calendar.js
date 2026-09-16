@@ -2,6 +2,7 @@ import { el, clear, haptic } from '../util/dom.js';
 import { iconEl } from './icons.js';
 import { faceEl, faceForDay, primaryWorkout } from './face.js';
 import { openCheckin } from './checkin.js';
+import { resolveFill } from '../util/color.js';
 import {
   LENSES, lensLegend, dietInfo, drinksColor, drinksLabel, sleepColor, sleepLabel, hasCheckin,
 } from '../metrics.js';
@@ -80,7 +81,7 @@ export function calendarView(root, ctx) {
     } else {
       root.append(el('div', { class: 'cal-legend' },
         ...(lensLegend(ctx.lens) || []).map(({ color, label }) =>
-          el('span', { class: 'lg' }, el('i', { style: { background: color } }), label)),
+          el('span', { class: 'lg' }, el('i', { style: { background: resolveFill(color).fill } }), label)),
       ));
     }
 
@@ -125,7 +126,7 @@ function bubbleFor(lens, items, day, dayKey) {
       const scored = store.scoreFor(dayKey);
       if (!scored) return null;
       return {
-        fill: scored.band.color,
+        ...resolveFill(scored.band.color),
         node: faceEl(scored.band.face),
         // One component isn't enough to call a day; show it faded rather than
         // pretending a weigh-in alone earned a green face.
@@ -135,12 +136,12 @@ function bubbleFor(lens, items, day, dayKey) {
     }
     case 'food': {
       const d = dietInfo(day?.diet);
-      return d && { fill: d.color, node: el('span', { class: 'glyph e' }, d.icon), title: d.label };
+      return d && { ...resolveFill(d.color), node: el('span', { class: 'glyph e' }, d.icon), title: d.label };
     }
     case 'drinks': {
       if (day?.drinks == null) return null;
       return {
-        fill: drinksColor(day.drinks),
+        ...resolveFill(drinksColor(day.drinks)),
         node: el('span', { class: 'glyph n' }, drinksLabel(day.drinks)),
         title: `${drinksLabel(day.drinks)} drink${day.drinks === 1 ? '' : 's'}`,
       };
@@ -148,7 +149,7 @@ function bubbleFor(lens, items, day, dayKey) {
     case 'sleep': {
       if (day?.sleepHours == null) return null;
       return {
-        fill: sleepColor(day.sleepHours),
+        ...resolveFill(sleepColor(day.sleepHours)),
         node: el('span', { class: 'glyph n' }, sleepLabel(day.sleepHours)),
         title: `${sleepLabel(day.sleepHours)} hours`,
       };
@@ -157,8 +158,9 @@ function bubbleFor(lens, items, day, dayKey) {
       const face = faceForDay(items);
       if (!face) return null;
       const primary = primaryWorkout(items);
+      const primaryColor = primary ? typeInfo(primary.type).color : null;
       return {
-        fill: primary ? typeInfo(primary.type).color : 'var(--surface-2)',
+        ...(primaryColor ? resolveFill(primaryColor) : { fill: 'var(--surface-2)', ink: null }),
         node: faceEl(face),
         title: items.map((w) => typeInfo(w.type).label).join(', '),
       };
@@ -179,7 +181,7 @@ function dayCell(cell, items, tKey, lens) {
 
   const bubble = el('div', {
     class: 'bubble',
-    style: shown ? { '--fill': shown.fill } : null,
+    style: shown ? { '--fill': shown.fill, '--ink': shown.ink } : null,
   }, shown ? shown.node : null);
 
   // A second activity of the day rides along, but only on the workouts lens —

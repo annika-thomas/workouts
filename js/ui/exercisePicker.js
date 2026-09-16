@@ -1,6 +1,7 @@
 import { el, haptic, toast } from '../util/dom.js';
 import { store } from '../store.js';
 import { MUSCLES, muscleInfo, searchExercises, newCustomExercise } from '../exercises.js';
+import { inkFor } from '../util/color.js';
 
 /**
  * Swaps the given sheet over to a searchable exercise list, then hands the
@@ -23,7 +24,7 @@ export function openExercisePicker(sheet, { onPick, onCancel }) {
     filterRow.replaceChildren(...MUSCLES.map((m) => el('button', {
       class: 'chip',
       'aria-pressed': String(muscleFilter === m.key),
-      style: { '--pick': m.color },
+      style: { '--pick': m.color, '--ink': inkFor(m.color) },
       onclick: () => { muscleFilter = muscleFilter === m.key ? null : m.key; haptic(4); drawFilters(); draw(); },
     }, m.label)));
   }
@@ -80,7 +81,7 @@ export function openExercisePicker(sheet, { onPick, onCancel }) {
     const drawGrid = () => grid.replaceChildren(...MUSCLES.map((m) => el('button', {
       class: 'chip',
       'aria-pressed': String(picked.has(m.key)),
-      style: { '--pick': m.color },
+      style: { '--pick': m.color, '--ink': inkFor(m.color) },
       onclick: () => { picked.has(m.key) ? picked.delete(m.key) : picked.add(m.key); haptic(4); drawGrid(); },
     }, m.label)));
     drawGrid();

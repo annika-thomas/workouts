@@ -24,7 +24,7 @@ let rerenderCurrent = null;
 function boot() {
   store.load();
   applyTheme(store.settings.theme);
-  watchSystemTheme(() => store.settings.theme);
+  watchSystemTheme(() => store.settings.theme, () => rerenderCurrent?.());
 
   const app = el('div', { id: 'app' });
   const bar = el('header', { class: 'appbar' },

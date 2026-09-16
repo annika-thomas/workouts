@@ -20,11 +20,11 @@ export const WEIGHTS = { activity: 0.40, food: 0.35, drink: 0.25 };
 
 /** Score bands, best first. `min` is inclusive. */
 export const BANDS = [
-  { key: 'great', min: 0.82, label: 'Great day', face: 'happy',   color: '#f2d06b' },
-  { key: 'good',  min: 0.64, label: 'Good day',  face: 'content', color: '#b9dd9f' },
-  { key: 'ok',    min: 0.45, label: 'Fine',      face: 'neutral', color: '#8ecfae' },
-  { key: 'meh',   min: 0.27, label: 'Off day',   face: 'unsure',  color: '#f7c987' },
-  { key: 'poor',  min: -1,   label: 'Rough day', face: 'sad',     color: '#f0a49c' },
+  { key: 'great', min: 0.82, label: 'Great day', face: 'happy',   color: '#3f5637' },
+  { key: 'good',  min: 0.64, label: 'Good day',  face: 'content', color: '#7c9a5e' },
+  { key: 'ok',    min: 0.45, label: 'Fine',      face: 'neutral', color: '#dccf93' },
+  { key: 'meh',   min: 0.27, label: 'Off day',   face: 'unsure',  color: '#d19a5c' },
+  { key: 'poor',  min: -1,   label: 'Rough day', face: 'sad',     color: '#a85c2f' },
 ];
 
 export function bandFor(score) {

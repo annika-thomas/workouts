@@ -2,6 +2,7 @@ import { el, toast, haptic, confirmDialog } from '../util/dom.js';
 import { openSheet } from './sheet.js';
 import { store } from '../store.js';
 import { typeInfo } from '../types.js';
+import { inkFor } from '../util/color.js';
 
 /**
  * Saved workouts you start from again — the few you rotate through.
@@ -64,7 +65,7 @@ export function routineChips(onPick, { label = 'Start from a routine' } = {}) {
       ...routines.map((r) => el('button', {
         type: 'button',
         class: 'chip',
-        style: { '--pick': typeInfo(r.type).color },
+        style: { '--pick': typeInfo(r.type).color, '--ink': inkFor(typeInfo(r.type).color) },
         onclick: () => { haptic(); store.touchRoutine(r.id); onPick(r); },
       },
         el('span', {}, typeInfo(r.type).icon),

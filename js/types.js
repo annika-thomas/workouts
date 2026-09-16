@@ -1,26 +1,26 @@
 // Workout taxonomy. `key` is what gets persisted, so don't rename existing keys
 // without a migration in store.js.
 export const TYPES = [
-  { key: 'run',      label: 'Run',       icon: '🏃', color: '#f6a58e', distance: true,  pace: 'pace' },
-  { key: 'ride',     label: 'Ride',      icon: '🚴', color: '#f7c987', distance: true,  pace: 'speed' },
-  { key: 'lift',     label: 'Lift',      icon: '🏋️', color: '#b9a9ef', distance: false, pace: null },
-  { key: 'swim',     label: 'Swim',      icon: '🏊', color: '#8fc9ee', distance: true,  pace: 'swim' },
-  { key: 'climb',    label: 'Climb',     icon: '🧗', color: '#f2a3c0', distance: false, pace: null },
-  { key: 'yoga',     label: 'Yoga',      icon: '🧘', color: '#8fd6b4', distance: false, pace: null },
-  { key: 'walk',     label: 'Walk',      icon: '🚶', color: '#c3c8b4', distance: true,  pace: 'pace' },
-  { key: 'hike',     label: 'Hike',      icon: '🥾', color: '#a8cd85', distance: true,  pace: 'pace' },
-  { key: 'ski',      label: 'Ski',       icon: '🎿', color: '#a8c2f0', distance: true,  pace: 'speed' },
-  { key: 'row',      label: 'Row',       icon: '🚣', color: '#7fd4cb', distance: true,  pace: 'speed' },
-  { key: 'sport',    label: 'Sport',     icon: '⚽', color: '#f0d97e', distance: false, pace: null },
-  { key: 'mobility', label: 'Mobility',  icon: '🤸', color: '#cde39a', distance: false, pace: null },
-  { key: 'rest',     label: 'Rest day',  icon: '😴', color: '#cdd3c6', distance: false, pace: null },
-  { key: 'other',    label: 'Other',     icon: '✨', color: '#ddd5c6', distance: false, pace: null },
+  { key: 'run',      label: 'Run',       icon: '🏃', color: '#be7043', distance: true,  pace: 'pace' },
+  { key: 'ride',     label: 'Ride',      icon: '🚴', color: '#d4a368', distance: true,  pace: 'speed' },
+  { key: 'lift',     label: 'Lift',      icon: '🏋️', color: '#7e7093', distance: false, pace: null },
+  { key: 'swim',     label: 'Swim',      icon: '🏊', color: '#5f8296', distance: true,  pace: 'swim' },
+  { key: 'climb',    label: 'Climb',     icon: '🧗', color: '#ae6b75', distance: false, pace: null },
+  { key: 'yoga',     label: 'Yoga',      icon: '🧘', color: '#6e9478', distance: false, pace: null },
+  { key: 'walk',     label: 'Walk',      icon: '🚶', color: '#9b9c8a', distance: true,  pace: 'pace' },
+  { key: 'hike',     label: 'Hike',      icon: '🥾', color: '#7d8f4e', distance: true,  pace: 'pace' },
+  { key: 'ski',      label: 'Ski',       icon: '🎿', color: '#7f91a9', distance: true,  pace: 'speed' },
+  { key: 'row',      label: 'Row',       icon: '🚣', color: '#5f9089', distance: true,  pace: 'speed' },
+  { key: 'sport',    label: 'Sport',     icon: '⚽', color: '#c0a455', distance: false, pace: null },
+  { key: 'mobility', label: 'Mobility',  icon: '🤸', color: '#a3b076', distance: false, pace: null },
+  { key: 'rest',     label: 'Rest day',  icon: '😴', color: '#a8a695', distance: false, pace: null },
+  { key: 'other',    label: 'Other',     icon: '✨', color: '#b5ac93', distance: false, pace: null },
 ];
 
 const BY_KEY = Object.fromEntries(TYPES.map((t) => [t.key, t]));
 
 export function typeInfo(key) {
-  return BY_KEY[key] || { key: key || 'other', label: key || 'Other', icon: '✨', color: '#ddd5c6', distance: false, pace: null };
+  return BY_KEY[key] || { key: key || 'other', label: key || 'Other', icon: '✨', color: '#b5ac93', distance: false, pace: null };
 }
 
 // Maps Strava's sport_type / activity-type strings onto our keys.

@@ -7,6 +7,7 @@ import { formatDay, relativeDay } from '../util/date.js';
 import { DIET, DRINK_STEPS } from '../metrics.js';
 import { entryVolume } from '../exercises.js';
 import { faceEl } from './face.js';
+import { resolveFill } from '../util/color.js';
 import {
   formatDuration, formatDistance, formatEffortRate, weightLabel, kgToDisplay, displayToKg, round,
 } from '../util/units.js';
@@ -204,7 +205,7 @@ function scoreCard(dayKey) {
       el('span', { class: 'track' },
         el('span', {
           class: 'fill',
-          style: { width: `${Math.round(p.value * 100)}%`, background: scored.band.color },
+          style: { width: `${Math.round(p.value * 100)}%`, background: resolveFill(scored.band.color).fill },
         })),
       el('span', { class: 'n', style: { minWidth: '92px' } }, p.detail),
     )),
@@ -214,7 +215,7 @@ function scoreCard(dayKey) {
     el('div', { class: 'score-head' },
       el('span', {
         class: 'score-face',
-        style: { background: scored.band.color },
+        style: (({ fill, ink }) => ({ background: fill, '--ink': ink }))(resolveFill(scored.band.color)),
       }, faceEl(scored.band.face)),
       el('div', { class: 'row-main' },
         el('div', { class: 'row-title' }, scored.band.label),

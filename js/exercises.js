@@ -8,24 +8,24 @@
  */
 
 export const MUSCLES = [
-  { key: 'chest',      label: 'Chest',      color: '#f6a58e' },
-  { key: 'back',       label: 'Back',       color: '#8fc9ee' },
-  { key: 'shoulders',  label: 'Shoulders',  color: '#f7c987' },
-  { key: 'traps',      label: 'Traps',      color: '#a8c2f0' },
-  { key: 'biceps',     label: 'Biceps',     color: '#b9a9ef' },
-  { key: 'triceps',    label: 'Triceps',    color: '#8fd6b4' },
-  { key: 'forearms',   label: 'Forearms',   color: '#cde39a' },
-  { key: 'core',       label: 'Core',       color: '#f0d97e' },
-  { key: 'glutes',     label: 'Glutes',     color: '#f2a3c0' },
-  { key: 'quads',      label: 'Quads',      color: '#7fd4cb' },
-  { key: 'hamstrings', label: 'Hamstrings', color: '#a8cd85' },
-  { key: 'calves',     label: 'Calves',     color: '#e0bfa0' },
+  { key: 'chest',      label: 'Chest',      color: '#be7043' },
+  { key: 'back',       label: 'Back',       color: '#5f8296' },
+  { key: 'shoulders',  label: 'Shoulders',  color: '#d4a368' },
+  { key: 'traps',      label: 'Traps',      color: '#7f91a9' },
+  { key: 'biceps',     label: 'Biceps',     color: '#7e7093' },
+  { key: 'triceps',    label: 'Triceps',    color: '#6e9478' },
+  { key: 'forearms',   label: 'Forearms',   color: '#a3b076' },
+  { key: 'core',       label: 'Core',       color: '#c0a455' },
+  { key: 'glutes',     label: 'Glutes',     color: '#ae6b75' },
+  { key: 'quads',      label: 'Quads',      color: '#5f9089' },
+  { key: 'hamstrings', label: 'Hamstrings', color: '#7d8f4e' },
+  { key: 'calves',     label: 'Calves',     color: '#b5ac93' },
 ];
 
 const MUSCLE_BY_KEY = Object.fromEntries(MUSCLES.map((m) => [m.key, m]));
 
 export function muscleInfo(key) {
-  return MUSCLE_BY_KEY[key] || { key, label: key, color: '#cdd3c6' };
+  return MUSCLE_BY_KEY[key] || { key, label: key, color: '#b5ac93' };
 }
 
 /** [id, name, 'primary secondary …', equipment, unit?] */

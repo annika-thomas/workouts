@@ -36,6 +36,7 @@ export function settingsView(root) {
       select([['auto', 'Auto'], ['dark', 'Dark'], ['light', 'Light']], s.theme, (v) => {
         store.updateSettings({ theme: v });
         applyTheme(v);
+        render();
       })));
 
     root.append(prefs);

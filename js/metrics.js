@@ -9,11 +9,11 @@ import { BANDS } from './score.js';
  */
 
 export const DIET = [
-  { value: 1, icon: '🍩', label: 'Indulgent', color: '#f2a3c0' },
-  { value: 2, icon: '🍟', label: 'Heavy',     color: '#f6a58e' },
-  { value: 3, icon: '🥪', label: 'Normal',    color: '#f0d97e' },
-  { value: 4, icon: '🥗', label: 'Good',      color: '#cde39a' },
-  { value: 5, icon: '🥦', label: 'Clean',     color: '#8fd6b4' },
+  { value: 1, icon: '🍩', label: 'Indulgent', color: '#a85c2f' },
+  { value: 2, icon: '🍟', label: 'Heavy',     color: '#d19a5c' },
+  { value: 3, icon: '🥪', label: 'Normal',    color: '#dccf93' },
+  { value: 4, icon: '🥗', label: 'Good',      color: '#7c9a5e' },
+  { value: 5, icon: '🥦', label: 'Clean',     color: '#3f5637' },
 ];
 
 export function dietInfo(value) {
@@ -22,7 +22,7 @@ export function dietInfo(value) {
 
 /** Standard drinks. 6 is stored for "5+", which the UI labels as such. */
 export const DRINK_STEPS = [0, 1, 2, 3, 4, 5];
-export const DRINK_COLORS = ['#b9dd9f', '#cde39a', '#f0d97e', '#f7c987', '#f6a58e', '#ef8f94'];
+export const DRINK_COLORS = ['#3f5637', '#6c8b52', '#9daf6d', '#dccf93', '#d19a5c', '#a85c2f'];
 
 export function drinksColor(n) {
   if (n == null) return null;
@@ -35,8 +35,8 @@ export function drinksLabel(n) {
 }
 
 const SLEEP_BANDS = [
-  [5, '#f6a58e'], [6, '#f7c987'], [7, '#f0d97e'],
-  [8, '#cde39a'], [9, '#8fd6b4'], [Infinity, '#8fc9ee'],
+  [5, '#a85c2f'], [6, '#d19a5c'], [7, '#dccf93'],
+  [8, '#7c9a5e'], [9, '#3f5637'], [Infinity, '#5f8296'],
 ];
 
 export function sleepColor(hours) {
@@ -76,9 +76,9 @@ export function lensLegend(key) {
     case 'food':   return DIET.map((d) => ({ color: d.color, label: `${d.icon} ${d.label}` }));
     case 'drinks': return DRINK_COLORS.map((color, i) => ({ color, label: i >= 5 ? '5+' : String(i) }));
     case 'sleep':  return [
-      { color: '#f6a58e', label: 'under 5h' }, { color: '#f0d97e', label: '6–7h' },
-      { color: '#cde39a', label: '7–8h' }, { color: '#8fd6b4', label: '8–9h' },
-      { color: '#8fc9ee', label: '9h+' },
+      { color: '#a85c2f', label: 'under 5h' }, { color: '#dccf93', label: '6–7h' },
+      { color: '#7c9a5e', label: '7–8h' }, { color: '#3f5637', label: '8–9h' },
+      { color: '#5f8296', label: '9h+' },
     ];
     default: return null;
   }

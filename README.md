@@ -8,8 +8,8 @@ data lives on your device.
 
 ## What it does
 
-**Calendar** — every day is a face, on a spectrum from a gold grin to a coral
-frown. The score behind it is a weighted blend of three things you control:
+**Calendar** — every day is a face, on a spectrum from deep forest green
+through sage, wheat and tan to rust. The score behind it is a weighted blend of three things you control:
 whether you moved (40%), how you ate (35%), and how little you drank (25%).
 
 Two pieces of fairness sit on top, because a flat average would lie:
@@ -253,7 +253,13 @@ Two things to remember:
   Muscles tab. You can also add exercises from inside the app — they're stored
   with your data, so they survive and export alongside it.
 - Colours all come from the tokens at the top of `css/app.css`, defined once
-  for light and again for dark.
+  for light and again for dark. The palette is olive and cream throughout —
+  nothing in it is pure white or pure black.
+- Fills are chosen in JS, not CSS, so `js/util/color.js` resolves them:
+  `inkFor` picks cream or deep-olive lettering by comparing real contrast
+  ratios, and `resolveFill` lifts the two colours that sit too close to the
+  dark theme's ground. Add a colour that fails on dark and it goes in that
+  file's `DARK_SWAP`, not in a second palette.
 - The day score lives entirely in `js/score.js` — `WEIGHTS` sets the balance,
   `BANDS` the faces and cutoffs, the drink curves the weekend allowance, and
   `LOOKBACK` how fast rest credit decays. Nothing else needs touching to

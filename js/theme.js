@@ -17,7 +17,12 @@ function updateStatusBarColor() {
   meta.content = bg || '#0d1016';
 }
 
-export function watchSystemTheme(getMode) {
+export function watchSystemTheme(getMode, onChange) {
   const mq = window.matchMedia('(prefers-color-scheme: dark)');
-  mq.addEventListener?.('change', () => { if (getMode() === 'auto') updateStatusBarColor(); });
+  mq.addEventListener?.('change', () => {
+    if (getMode() !== 'auto') return;
+    updateStatusBarColor();
+    // Fills are resolved per theme in JS, so the view has to be rebuilt.
+    onChange?.();
+  });
 }

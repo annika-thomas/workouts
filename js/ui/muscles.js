@@ -3,6 +3,7 @@ import { openSheet } from './sheet.js';
 import { store } from '../store.js';
 import { MUSCLES, muscleInfo, bestSet, formatSet, entryVolume } from '../exercises.js';
 import { lineChart } from './chart.js';
+import { inkFor } from '../util/color.js';
 import { todayKey, addDays, fromKey, weekStartKey, monthShort, formatDay, relativeDay } from '../util/date.js';
 import { kgToDisplay, weightLabel, round } from '../util/units.js';
 
@@ -40,7 +41,7 @@ export function musclesView(root, ctx) {
         return el('button', {
           class: 'chip',
           'aria-pressed': String(ctx.muscle === m.key),
-          style: { '--pick': m.color },
+          style: { '--pick': m.color, '--ink': inkFor(m.color) },
           onclick: () => { ctx.muscle = m.key; haptic(4); render(); },
         }, m.label, n ? el('span', { class: 'chip-n' }, String(n)) : null);
       }),
