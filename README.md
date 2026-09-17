@@ -109,6 +109,10 @@ no build step, the repo root is the site.
 It gets its own icon, opens full-screen with no browser chrome, and works
 offline.
 
+Updates apply on the next launch: when a new version's worker takes over, the
+app reloads itself once. If a sheet is open it holds off and says so rather
+than discarding what you were typing.
+
 > On iOS the installed app gets a **separate storage box from Safari**. Anything
 > you logged in Safari beforehand won't appear in it. Either start logging after
 > you've installed it, or move your entries across with Settings → Backup JSON
@@ -276,5 +280,6 @@ Two things to remember:
   `assets/fonts/` rather than pulled from a CDN, so the app has no external
   dependencies and looks the same offline. Swapping it means replacing that
   file and the `@font-face` and `--font` lines at the top of the stylesheet.
-- After editing any file, bump `CACHE` in `sw.js`. Otherwise a phone that has
-  already installed the app keeps serving the old version.
+- After editing any file, bump `CACHE` in `sw.js`. That is what tells an
+  installed copy there is something new; without it the phone keeps serving
+  the old version indefinitely.

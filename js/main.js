@@ -110,12 +110,42 @@ function todayLabel() {
   return new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
+/**
+ * Register the offline worker, and make a deploy land on the next launch
+ * rather than the one after.
+ *
+ * A page has already pulled its scripts from the old cache by the time a new
+ * worker can install, so the first launch after an update still renders the
+ * old app. Reloading once the new worker claims the page collapses that to a
+ * single launch — except mid-edit, where yanking the page away would lose
+ * what you were typing.
+ */
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   const secure = location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname);
   if (!secure) return;
+
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    // On a first install there was nothing controlling the page, so nothing stale.
+    if (!hadController || reloading) return;
+    if (document.querySelector('.scrim')) {
+      toast('Update ready — reopen the app to apply');
+      return;
+    }
+    reloading = true;
+    location.reload();
+  });
+
   window.addEventListener('load', () => {
     navigator.serviceWorker.register(new URL('../sw.js', import.meta.url), { scope: './' })
+      .then((reg) => {
+        // Also look for an update when you come back to the app, not only cold.
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) reg.update().catch(() => {});
+        });
+      })
       .catch((err) => console.warn('Offline mode unavailable', err));
   });
 }
