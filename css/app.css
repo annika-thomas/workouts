@@ -560,7 +560,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -0.015em; }
 .sheet {
   width: 100%;
   max-width: 620px;
-  max-height: 92vh;
+  max-height: 100%;
   background: var(--bg);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   box-shadow: var(--shadow-lg);
@@ -593,7 +593,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -0.015em; }
 }
 .sheet-foot {
   flex: none;
-  padding: 12px 18px calc(14px + var(--safe-bottom));
+  padding: 12px 18px max(14px, calc(14px + var(--safe-bottom)));
   background: var(--surface);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   box-shadow: 0 -2px 16px rgba(70, 82, 60, .07);
@@ -1138,7 +1138,7 @@ select {
 .set-rows { padding: 0 13px; }
 .set-row {
   display: grid;
-  grid-template-columns: 26px 1fr 1fr 32px;
+  grid-template-columns: 22px 1fr 1fr 38px 28px;
   gap: 7px;
   align-items: center;
   margin-bottom: 7px;
@@ -1200,3 +1200,66 @@ select {
 
 /* A day scored from only one of the three components. */
 .day.is-partial .bubble { opacity: .55; }
+
+/* Bodyweight toggle inside a set row */
+.set-bw {
+  height: 42px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  color: var(--text-3);
+  border: 1.5px solid var(--line);
+  transition: background .15s, color .15s;
+}
+.set-bw[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+
+/* "Next time" nudge */
+.next-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 13px 0;
+}
+.next-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--text-3);
+}
+.next-btn {
+  flex: none;
+  min-height: 34px;
+  padding: 0 11px;
+  border-radius: var(--pill);
+  font-size: 12.5px;
+  font-weight: 750;
+  color: var(--text-2);
+  border: 1.5px solid var(--line);
+  transition: background .15s, color .15s, border-color .15s;
+}
+.next-btn[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.next-hint {
+  padding: 8px 13px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* The marker as it appears on a collapsed exercise */
+.nextmark {
+  flex: none;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  background: var(--accent-soft);
+  color: var(--accent);
+}

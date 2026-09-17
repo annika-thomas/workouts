@@ -2,6 +2,31 @@ import { el, clear } from '../util/dom.js';
 import { iconEl } from './icons.js';
 
 /**
+ * Pin a sheet to the *visible* viewport rather than the layout one.
+ *
+ * On iOS an on-screen keyboard shrinks the visual viewport but leaves the
+ * layout viewport alone, so a `position: fixed` sheet stays anchored to the
+ * bottom of the screen — underneath the keyboard. visualViewport gives us the
+ * area actually on screen; following it keeps the sheet where you can see it.
+ */
+function trackViewport(scrim) {
+  const vv = window.visualViewport;
+  if (!vv) return () => {};
+  const apply = () => {
+    scrim.style.top = `${vv.offsetTop}px`;
+    scrim.style.height = `${vv.height}px`;
+    scrim.style.bottom = 'auto';
+  };
+  apply();
+  vv.addEventListener('resize', apply);
+  vv.addEventListener('scroll', apply);
+  return () => {
+    vv.removeEventListener('resize', apply);
+    vv.removeEventListener('scroll', apply);
+  };
+}
+
+/**
  * Bottom sheet. Returns a handle so callers can swap the body in place
  * (e.g. day view -> workout editor -> back) without stacking scrims.
  */
@@ -27,10 +52,19 @@ export function openSheet({ title, subtitle, body, footer, onClose }) {
   const onKey = (e) => { if (e.key === 'Escape') handle.close(); };
   document.addEventListener('keydown', onKey);
 
+  const untrack = trackViewport(scrim);
+
+  // With the sheet now bounded by the visible area, keep whatever you're
+  // typing in above the keyboard as it opens.
+  bodyWrap.addEventListener('focusin', (e) => {
+    setTimeout(() => e.target.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' }), 250);
+  });
+
   const handle = {
     scrim,
     close() {
       document.removeEventListener('keydown', onKey);
+      untrack();
       scrim.style.animation = 'fade .15s ease reverse';
       sheet.style.animation = 'slide-up .18s ease reverse';
       setTimeout(() => scrim.remove(), 150);

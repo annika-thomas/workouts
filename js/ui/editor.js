@@ -109,6 +109,7 @@ export function openEditor({ date, workout = null, sheet = null, routineId = nul
   lift = liftSection({
     workoutId: draft.id,
     entries: draft.exercises,
+    date: draft.date,
     getSheet: () => host,  // the sheet doesn't exist yet at this point
     restore: () => showForm(),
     onChange: () => syncDistance(),

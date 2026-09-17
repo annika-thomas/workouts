@@ -128,6 +128,20 @@ class Store extends EventTarget {
     return { workouts: this.workoutsOn(dayKey), day: this.day(dayKey) };
   }
 
+  /**
+   * The bodyweight to price a day's bodyweight sets at: the most recent
+   * weigh-in on or before that date, so old sessions keep the load you were
+   * actually lifting rather than today's.
+   */
+  bodyWeightOn(dayKey) {
+    let best = null;
+    for (const d of Object.values(this.state.days)) {
+      if (d.weightKg == null || d.date > dayKey) continue;
+      if (!best || d.date > best.date) best = d;
+    }
+    return best?.weightKg || 0;
+  }
+
   /** The day's score, or null when nothing was logged. */
   scoreFor(dayKey) {
     return scoreDay(dayKey, (k) => this.dayContext(k));
@@ -233,7 +247,7 @@ class Store extends EventTarget {
         if (!share || !(entry.sets || []).length) continue;
         const d = (byDate[w.date] ||= { date: w.date, sets: 0, volume: 0, reps: 0 });
         d.sets += entry.sets.length * share;
-        d.volume += entryVolume(entry) * share;
+        d.volume += entryVolume(entry, this.bodyWeightOn(w.date)) * share;
         d.reps += entry.sets.reduce((n, x) => n + (x.reps || 0), 0) * share;
       }
     }
@@ -258,7 +272,7 @@ class Store extends EventTarget {
         a.best = bestSet([a.best, ...entry.sets].filter(Boolean));
         a.sets += entry.sets.length;
         a.weightedSets += entry.sets.length * share;
-        a.volume += entryVolume(entry);
+        a.volume += entryVolume(entry, this.bodyWeightOn(w.date));
         a.sessions += 1;
         if (!a.lastDate || w.date > a.lastDate) a.lastDate = w.date;
       }
@@ -529,8 +543,10 @@ function normaliseEntries(entries) {
     exerciseId: e.exerciseId,
     name: e.name || '',
     notes: (e.notes || '').trim(),
+    // 'up' / 'down': a note to yourself about next time.
+    next: e.next === 'up' || e.next === 'down' ? e.next : null,
     sets: (e.sets || [])
-      .map((s) => ({ reps: numOrNull(s.reps), weightKg: numOrNull(s.weightKg) }))
+      .map((s) => ({ reps: numOrNull(s.reps), weightKg: numOrNull(s.weightKg), bw: Boolean(s.bw) }))
       .filter((s) => s.reps != null && s.reps > 0),
   })).filter((e) => e.exerciseId);
 }

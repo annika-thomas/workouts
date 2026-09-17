@@ -47,7 +47,10 @@ for rides, `/100m` for swims.
 
 **Lifting gets its own interface.** Pick **Lift** and the editor grows an
 exercise list: search 89 built-in movements (or add your own), then type reps
-and weight per set. Adding an exercise prefills the sets you did last time, and
+and weight per set. Tap **BW** on a set for bodyweight — it's on by default for
+pull-ups and the like, and the weight box becomes added load, so
+`8 @ BW +10 kg` reads as it should. Each exercise also takes a **+ More / −
+Less** note for next time, which surfaces as a hint the next session you do it. Adding an exercise prefills the sets you did last time, and
 "+ Add set" copies the row above — a repeat session is a handful of taps. Each
 exercise summarises as you go (`3 × 8 @ 60 kg`) and the workout totals its sets
 and load.
@@ -248,6 +251,10 @@ Two things to remember:
 - Add an activity type in `js/types.js` — its `color` is the pastel its day
   circles take. The `key` is what gets stored, so renaming an existing one
   needs a migration in `store.js`.
+- Load moved counts bodyweight sets at whatever you weighed on or before that
+  day, so old sessions keep the load you were actually lifting. With no
+  weigh-in on record there's nothing honest to price them at, so they count
+  nothing and the summary line says so.
 - Add an exercise to `js/exercises.js` as `[id, name, 'primary secondary …',
   equipment]`. Muscle order matters: the first one gets full credit in the
   Muscles tab. You can also add exercises from inside the app — they're stored

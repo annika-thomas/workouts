@@ -1,6 +1,6 @@
 import { el, haptic, confirmDialog } from '../util/dom.js';
 import { store } from '../store.js';
-import { muscleInfo, summariseEntry, entryVolume } from '../exercises.js';
+import { muscleInfo, summariseEntry, entryVolume, hasUnpricedBodyweight } from '../exercises.js';
 import { openExercisePicker } from './exercisePicker.js';
 import { kgToDisplay, displayToKg, weightLabel, round } from '../util/units.js';
 
@@ -11,9 +11,11 @@ import { kgToDisplay, displayToKg, weightLabel, round } from '../util/units.js';
  * Returns a node plus a read() the editor calls on save, so this owns its own
  * draft state and the editor stays unaware of the shape of a set.
  */
-export function liftSection({ workoutId, entries, getSheet, restore, onChange }) {
+export function liftSection({ workoutId, entries, date, getSheet, restore, onChange }) {
   const units = store.settings.units;
   const draft = entries.map((e) => ({ ...e, sets: (e.sets || []).map((s) => ({ ...s })) }));
+  // Bodyweight sets are priced at whatever you weighed around then.
+  const bodyWeight = store.bodyWeightOn(date || new Date().toISOString().slice(0, 10));
   // Which exercise is open for editing. New ones open automatically.
   let openIndex = draft.length === 1 ? 0 : -1;
 
@@ -21,8 +23,9 @@ export function liftSection({ workoutId, entries, getSheet, restore, onChange })
 
   function totals() {
     const sets = draft.reduce((n, e) => n + e.sets.length, 0);
-    const volume = draft.reduce((n, e) => n + entryVolume(e), 0);
-    return { sets, volume };
+    const volume = draft.reduce((n, e) => n + entryVolume(e, bodyWeight), 0);
+    const unpriced = draft.some((e) => hasUnpricedBodyweight(e, bodyWeight));
+    return { sets, volume, unpriced };
   }
 
   function draw() {
@@ -42,8 +45,9 @@ export function liftSection({ workoutId, entries, getSheet, restore, onChange })
         el('span', { class: 'ex-dot', style: { background: primary.color } }),
         el('span', { class: 'ex-body' },
           el('span', { class: 'ex-name' }, name),
-          el('span', { class: 'ex-muscles' }, summariseEntry(entry, ex, units)),
+          el('span', { class: 'ex-muscles' }, summariseEntry(entry, ex, units, bodyWeight)),
         ),
+        entry.next ? el('span', { class: `nextmark is-${entry.next}` }, entry.next === 'up' ? '+' : '−') : null,
         el('span', { class: 'ex-caret' }, isOpen ? '▾' : '▸'),
       );
 
@@ -59,6 +63,7 @@ export function liftSection({ workoutId, entries, getSheet, restore, onChange })
               el('span', {}, 'Set'),
               el('span', {}, timed ? 'Seconds' : 'Reps'),
               el('span', {}, weightLabel(units)),
+              el('span', {}, 'BW'),
               el('span', {}),
             ),
             ...entry.sets.map((set, si) => {
@@ -69,7 +74,7 @@ export function liftSection({ workoutId, entries, getSheet, restore, onChange })
               });
               const wInput = el('input', {
                 type: 'number', inputmode: 'decimal', min: '0', step: '0.5',
-                placeholder: ex?.bodyweight ? 'body' : '—',
+                placeholder: set.bw ? '+' : '—',
                 value: set.weightKg != null ? String(round(kgToDisplay(set.weightKg, units), 1)) : '',
                 onchange: (e) => { set.weightKg = displayToKg(e.target.value, units); refreshHead(); },
               });
@@ -77,6 +82,17 @@ export function liftSection({ workoutId, entries, getSheet, restore, onChange })
                 el('span', { class: 'set-n' }, String(si + 1)),
                 repInput,
                 wInput,
+                el('button', {
+                  class: 'set-bw',
+                  'aria-pressed': String(Boolean(set.bw)),
+                  'aria-label': `Bodyweight for set ${si + 1}`,
+                  onclick: () => {
+                    set.bw = !set.bw;
+                    haptic();
+                    drawRows();
+                    refreshHead();
+                  },
+                }, 'BW'),
                 el('button', {
                   class: 'set-x', 'aria-label': `Remove set ${si + 1}`,
                   onclick: () => { entry.sets.splice(si, 1); haptic(); drawRows(); refreshHead(); },
@@ -87,19 +103,45 @@ export function liftSection({ workoutId, entries, getSheet, restore, onChange })
         };
 
         const refreshHead = () => {
-          head.querySelector('.ex-muscles').textContent = summariseEntry(entry, ex, units);
+          head.querySelector('.ex-muscles').textContent = summariseEntry(entry, ex, units, bodyWeight);
           updateSummary();
         };
 
         drawRows();
 
-        card.append(rows, el('div', { class: 'ex-actions' },
+        const nextRow = el('div', { class: 'next-row' });
+        const drawNext = () => nextRow.replaceChildren(
+          el('span', { class: 'next-label' }, 'Next time'),
+          ...[['down', '−', 'Less'], ['up', '+', 'More']].map(([v, sign, label]) => el('button', {
+            class: `next-btn is-${v}`,
+            'aria-pressed': String(entry.next === v),
+            onclick: () => {
+              entry.next = entry.next === v ? null : v;
+              haptic();
+              drawNext();
+              draw();
+            },
+          }, sign, ' ', label)),
+        );
+        drawNext();
+
+        // What you told yourself last time you did this.
+        const prior = store.historyFor(entry.exerciseId).find((h) => h.workoutId !== workoutId);
+        const priorNote = prior?.entry?.next
+          ? el('div', { class: 'next-hint' },
+            `Last time you marked: ${prior.entry.next === 'up' ? 'go heavier' : 'ease off'}`)
+          : null;
+
+        // Node.append stringifies null, so drop the hint when there isn't one.
+        if (priorNote) card.append(rows, nextRow, priorNote);
+        else card.append(rows, nextRow);
+        card.append(el('div', { class: 'ex-actions' },
           el('button', {
             class: 'btn btn-ghost btn-sm',
             onclick: () => {
               // Copy the previous set — the usual case is another set the same.
               const prev = entry.sets.at(-1);
-              entry.sets.push(prev ? { ...prev } : { reps: null, weightKg: null });
+              entry.sets.push(prev ? { ...prev } : { reps: null, weightKg: null, bw: Boolean(ex?.bodyweight) });
               haptic();
               drawRows();
               refreshHead();
@@ -140,11 +182,15 @@ export function liftSection({ workoutId, entries, getSheet, restore, onChange })
 
   const summaryEl = el('div', { class: 'lift-total' });
   function updateSummary() {
-    const { sets, volume } = totals();
+    const { sets, volume, unpriced } = totals();
     summaryEl.hidden = !sets;
-    summaryEl.textContent = volume
-      ? `${sets} set${sets === 1 ? '' : 's'} · ${Math.round(kgToDisplay(volume, units)).toLocaleString()} ${weightLabel(units)} moved`
-      : `${sets} set${sets === 1 ? '' : 's'}`;
+    const base = `${sets} set${sets === 1 ? '' : 's'}`;
+    const moved = volume
+      ? `${base} · ${Math.round(kgToDisplay(volume, units)).toLocaleString()} ${weightLabel(units)} moved`
+      : base;
+    summaryEl.textContent = unpriced
+      ? `${moved} · log a weigh-in to count bodyweight`
+      : moved;
   }
 
   function pick() {
@@ -158,7 +204,8 @@ export function liftSection({ workoutId, entries, getSheet, restore, onChange })
           exerciseId: ex.id,
           name: ex.name,
           notes: '',
-          sets: previous || [{ reps: null, weightKg: null }],
+          next: null,
+          sets: previous || [{ reps: null, weightKg: null, bw: Boolean(ex.bodyweight) }],
         });
         openIndex = draft.length - 1;
         restore();

@@ -185,10 +185,24 @@ export function muscleShare(exercise, muscle) {
   return i === 0 ? 1 : 0.5;
 }
 
-/** Load moved by one exercise entry, in kg. Bodyweight sets contribute nothing. */
-export function entryVolume(entry) {
-  return (entry.sets || []).reduce(
-    (sum, s) => sum + (s.weightKg || 0) * (s.reps || 0), 0);
+/**
+ * Load moved by one exercise entry, in kg.
+ *
+ * A bodyweight set moves your bodyweight, so pass the weight you were at and
+ * it counts — plus anything you hung off a belt. Without a logged weigh-in
+ * there's nothing honest to use, so those sets contribute nothing and the UI
+ * says so rather than inventing a number.
+ */
+export function entryVolume(entry, bodyWeightKg = 0) {
+  return (entry.sets || []).reduce((sum, s) => {
+    const load = (s.bw ? bodyWeightKg : 0) + (s.weightKg || 0);
+    return sum + load * (s.reps || 0);
+  }, 0);
+}
+
+/** True when any set leans on bodyweight we couldn't price. */
+export function hasUnpricedBodyweight(entry, bodyWeightKg = 0) {
+  return !bodyWeightKg && (entry.sets || []).some((s) => s.bw);
 }
 
 export function entrySets(entry) {
@@ -211,24 +225,28 @@ export function bestSet(sets = []) {
 export function formatSet(set, unit, units) {
   if (!set || !set.reps) return '';
   const rep = unit === 'time' ? `${set.reps}s` : `${set.reps}`;
-  if (!set.weightKg) return rep;
-  const w = units === 'imperial' ? set.weightKg / 0.45359237 : set.weightKg;
   const lbl = units === 'imperial' ? 'lb' : 'kg';
-  return `${rep} @ ${Math.round(w * 10) / 10} ${lbl}`;
+  const shown = set.weightKg
+    ? Math.round((units === 'imperial' ? set.weightKg / 0.45359237 : set.weightKg) * 10) / 10
+    : null;
+  if (set.bw) return shown ? `${rep} @ BW +${shown} ${lbl}` : `${rep} @ BW`;
+  if (!shown) return rep;
+  return `${rep} @ ${shown} ${lbl}`;
 }
 
 /** "3 × 8 @ 60 kg" when the sets match, otherwise "4 sets · 1,240 kg". */
-export function summariseEntry(entry, exercise, units) {
+export function summariseEntry(entry, exercise, units, bodyWeightKg = 0) {
   // A row you haven't typed reps into yet isn't a set — otherwise a freshly
   // added exercise reads "1 × null".
   const sets = (entry.sets || []).filter((s) => s && s.reps);
   if (!sets.length) return 'No sets yet';
   const unit = exercise?.unit || 'reps';
-  const same = sets.every((s) => s.reps === sets[0].reps && (s.weightKg || 0) === (sets[0].weightKg || 0));
+  const same = sets.every((s) => s.reps === sets[0].reps
+    && (s.weightKg || 0) === (sets[0].weightKg || 0) && !s.bw === !sets[0].bw);
   if (same) {
     return `${sets.length} × ${formatSet(sets[0], unit, units)}`;
   }
-  const vol = entryVolume({ sets });
+  const vol = entryVolume({ sets }, bodyWeightKg);
   if (!vol) return `${sets.length} sets`;
   // Volume is stored in kg, so imperial needs converting like everywhere else.
   const shown = units === 'imperial' ? vol / 0.45359237 : vol;

@@ -176,7 +176,7 @@ function workoutRow(w, units, onClick) {
     w.distanceKm ? formatDistance(w.distanceKm, units) : null,
     formatEffortRate(w, t.pace, units) || null,
     w.rpe ? `RPE ${w.rpe}` : null,
-    liftSummary(w, units),
+    liftSummary(w, units, store.bodyWeightOn(w.date)),
   ].filter(Boolean);
 
   return el('button', { class: 'wo', onclick: onClick },
@@ -230,11 +230,11 @@ function scoreCard(dayKey) {
 }
 
 /** "4 exercises · 12 sets" for a lift, nothing for anything else. */
-function liftSummary(w, units) {
+function liftSummary(w, units, bodyWeight) {
   const entries = w.exercises || [];
   if (!entries.length) return null;
   const sets = entries.reduce((n, e) => n + (e.sets || []).length, 0);
-  const volume = entries.reduce((n, e) => n + entryVolume(e), 0);
+  const volume = entries.reduce((n, e) => n + entryVolume(e, bodyWeight), 0);
   const bits = [`${entries.length} exercise${entries.length === 1 ? '' : 's'}`,
     `${sets} set${sets === 1 ? '' : 's'}`];
   if (volume) {

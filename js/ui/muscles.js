@@ -136,7 +136,9 @@ function weeksIn(from, to) {
 
 function compact(n) {
   if (n == null) return '0';
-  return n >= 10000 ? `${Math.round(n / 1000)}k` : String(Math.round(n));
+  // One decimal in the k range: 10,400 reading as "10k" looked like a bug.
+  if (n >= 10000) return `${(n / 1000).toFixed(n >= 100000 ? 0 : 1)}k`;
+  return Math.round(n).toLocaleString();
 }
 
 function stat(value, unit, label) {
@@ -193,7 +195,7 @@ export function openExerciseDetail(exerciseId) {
   const history = store.historyFor(exerciseId);
 
   const points = history.slice().reverse()
-    .map((h) => ({ date: h.date, best: bestSet(h.entry.sets), volume: entryVolume(h.entry) }))
+    .map((h) => ({ date: h.date, best: bestSet(h.entry.sets), volume: entryVolume(h.entry, store.bodyWeightOn(h.date)) }))
     .filter((p) => p.best);
 
   const loaded = points.filter((p) => p.best.weightKg);
